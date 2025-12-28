@@ -7,7 +7,8 @@ import shutil
 import uuid
 import time
 from typing import List
-from pydantic import BaseModelfrom dotenv import load_dotenv
+from pydantic import BaseModel
+from dotenv import load_dotenv
 from gemini_client import analyze_image_design
 
 load_dotenv()
