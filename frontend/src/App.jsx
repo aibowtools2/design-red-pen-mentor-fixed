@@ -195,7 +195,7 @@ function App() {
       <div className="dashboard">
         <header className="hero">
           <h1 className="title">{text.title}</h1>
-          <p className="version-label">v2.2</p>
+          <p className="version-label">v2.3</p>
           <p className="subtitle" style={{ whiteSpace: 'pre-line' }}>{text.subtitle}</p>
         </header>
 

@@ -84,13 +84,23 @@ body {
   border-radius: 16px;
   overflow: hidden;
   border: 2px solid var(--glass-border);
+  display: flex;
+  /* Centering Fix */
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.3);
+  min-height: 200px;
+  /* Ensure height for centering */
 }
 
 .image-preview img {
   max-width: 100%;
-  max-height: 300px;
+  max-height: 400px;
+  /* Increased size visibility */
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  object-fit: contain;
+  /* Ensure proper aspect ratio */
 }
 
 .remove-image-btn {
