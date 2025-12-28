@@ -15,3 +15,5 @@ dist/
 *.jpeg
 *.webp
 data.json
+watched_videos/
+*.mp4

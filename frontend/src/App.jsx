@@ -124,6 +124,7 @@ function App() {
       <div className="dashboard">
         <header className="hero">
           <h1 className="title">{text.title}</h1>
+          <p className="version-label">v2.0 (Mobile Fix Applied)</p>
           <p className="subtitle" style={{ whiteSpace: 'pre-line' }}>{text.subtitle}</p>
         </header>
 
@@ -305,20 +306,7 @@ function App() {
         </div>
       </div>
 
-      {/* Version Indicator */}
-      <div style={{
-        position: 'fixed',
-        bottom: '10px',
-        right: '10px',
-        fontSize: '12px',
-        color: '#666',
-        backgroundColor: 'rgba(255,255,255,0.8)',
-        padding: '2px 6px',
-        borderRadius: '4px',
-        zIndex: 9999
-      }}>
-        v2.0 (Mobile Fix Applied)
-      </div>
+
     </div>
   );
 }
