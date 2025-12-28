@@ -2,7 +2,59 @@ import { useState } from 'react';
 import './App.css';
 
 // Fix Version: 1.2 (Force Rebuild)
-console.log("App Version: 1.2 - Fixed useState import");
+console.log("App Version: 2.1 - Mobile Image Compression Added");
+
+// Helper: Image Compression
+const compressImage = async (file) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      img.src = e.target.result;
+    };
+
+    reader.onerror = reject;
+
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+
+      // Limit to 1500px (Good balance for API & Speed)
+      const maxDim = 1500;
+
+      if (width > height && width > maxDim) {
+        height *= maxDim / width;
+        width = maxDim;
+      } else if (height > maxDim) {
+        width *= maxDim / height;
+        height = maxDim;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          // Create new file with same name but jpeg type
+          const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
+            type: 'image/jpeg',
+            lastModified: Date.now(),
+          });
+          console.log(`Compressed: ${file.size / 1024 / 1024}MB -> ${newFile.size / 1024 / 1024}MB`);
+          resolve(newFile);
+        } else {
+          reject(new Error("Compression failed"));
+        }
+      }, 'image/jpeg', 0.8); // 80% Quality
+    };
+
+    reader.readAsDataURL(file);
+  });
+};
 
 function App() {
   const [data, setData] = useState(null);
@@ -30,11 +82,21 @@ function App() {
     return inputData;
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const selected = e.target.files[0];
     if (selected) {
-      setFile(selected);
+      // Immediate Preview (Original)
       setPreview(URL.createObjectURL(selected));
+
+      // Compress for Upload
+      try {
+        console.log("Compressing image...");
+        const compressed = await compressImage(selected);
+        setFile(compressed);
+      } catch (err) {
+        console.error("Compression failed, using original", err);
+        setFile(selected);
+      }
     }
   };
 
