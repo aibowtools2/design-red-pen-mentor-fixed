@@ -4,7 +4,10 @@ from fastapi.staticfiles import StaticFiles
 import os
 import json
 import shutil
-from dotenv import load_dotenv
+import uuid
+import time
+from typing import List
+from pydantic import BaseModelfrom dotenv import load_dotenv
 from gemini_client import analyze_image_design
 
 load_dotenv()
@@ -42,6 +45,29 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 def read_root():
     return {"message": "Naruhodo Design AI API is running"}
 
+HISTORY_FILE = "history_log.json"
+
+@app.get("/history")
+def get_history():
+    """Returns list of past analyses"""
+    if os.path.exists(HISTORY_FILE):
+        with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+            try:
+                return json.load(f)
+            except:
+                return []
+    return []
+
+@app.get("/history/{analysis_id}")
+def get_history_item(analysis_id: str):
+    """Returns specific analysis data"""
+    # Look for history_data_{id}.json
+    filename = f"history_data_{analysis_id}.json"
+    if os.path.exists(filename):
+        with open(filename, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {"error": "History item not found"}
+
 @app.get("/analysis")
 def get_analysis():
     data_path = "data.json"
@@ -78,7 +104,42 @@ async def analyze_image(
     try:
         data = json.loads(result_json_str)
         data["source_image"] = file.filename
-        # Save locally
+        
+        # --- History Implementation ---
+        analysis_id = str(uuid.uuid4())
+        timestamp = int(time.time())
+        data["id"] = analysis_id
+        data["timestamp"] = timestamp
+        
+        # Save individual record
+        history_filename = f"history_data_{analysis_id}.json"
+        with open(history_filename, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+
+        # Update Index
+        history_entry = {
+            "id": analysis_id,
+            "timestamp": timestamp,
+            "type": context.get("type", "Unknown"),
+            "image": file.filename,
+            "score": data.get("design_score", 0)
+        }
+        
+        current_history = []
+        if os.path.exists(HISTORY_FILE):
+            with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+                try:
+                    current_history = json.load(f)
+                except:
+                    pass
+        
+        # Prepend new entry
+        current_history.insert(0, history_entry)
+        
+        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+            json.dump(current_history, f, ensure_ascii=False, indent=2)
+            
+        # Save locally (legacy support)
         with open("data.json", "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
             

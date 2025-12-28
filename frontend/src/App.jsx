@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 
 // Fix Version: 1.2 (Force Rebuild)
@@ -58,6 +58,7 @@ const compressImage = async (file) => {
 
 function App() {
   const [data, setData] = useState(null);
+  const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
 
   // Form State
@@ -171,6 +172,37 @@ function App() {
       "Photography: Landscape": isJa ? "写真: 風景" : "Photography: Landscape",
       "Photography: Product": isJa ? "写真: 商品 / 物撮り" : "Photography: Product",
       "Photography: Street": isJa ? "写真: ストリート / スナップ" : "Photography: Street"
+    }
+  };
+
+  // Fetch History on Mount
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const res = await fetch(`${apiUrl}/history`);
+        if (res.ok) setHistory(await res.json());
+      } catch (e) {
+        console.error("History fetch failed", e);
+      }
+    };
+    fetchHistory();
+  }, [data]); // Refresh when data changes
+
+  // Load specific history item
+  const loadHistoryItem = async (id) => {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    setLoading(true);
+    try {
+      const res = await fetch(`${apiUrl}/history/${id}`);
+      const json = await res.json();
+      setData(json);
+      // Scroll to top
+      window.scrollTo(0, 0);
+    } catch (e) {
+      alert("Failed to load history item");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -385,6 +417,33 @@ function App() {
         <div style={{ textAlign: 'center', marginTop: '50px', opacity: 0.6, fontSize: '0.9rem', borderTop: '1px solid #333', paddingTop: '20px' }}>
           Analyzed by デザイン赤ペン先生 (Design Red Pen Mentor)
         </div>
+
+        {/* History Section */}
+        {history.length > 0 && (
+          <div style={{ marginTop: '50px', borderTop: '1px solid #333', paddingTop: '30px' }}>
+            <h3 style={{ textAlign: 'center', marginBottom: '20px' }}>🕒 Recent Analyses (History)</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '15px' }}>
+              {history.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => loadHistoryItem(item.id)}
+                  style={{
+                    background: 'rgba(255,255,255,0.05)',
+                    padding: '15px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                  }}
+                  className='history-item'
+                >
+                  <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>{new Date(item.timestamp * 1000).toLocaleString()}</div>
+                  <div style={{ fontWeight: 'bold', margin: '5px 0' }}>{item.type}</div>
+                  <div style={{ color: 'var(--accent-green)' }}>Score: {item.score}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
 
