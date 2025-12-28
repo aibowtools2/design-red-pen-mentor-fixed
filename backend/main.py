@@ -11,9 +11,19 @@ load_dotenv()
 
 app = FastAPI()
 
+# Robust CORS Handling: Handle trailing slashes in env var
+frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+origins = [frontend_url, "http://localhost:5173"]
+
+# Add variations to ensure matching (with and without slash)
+if frontend_url.endswith("/"):
+    origins.append(frontend_url[:-1])
+else:
+    origins.append(frontend_url + "/")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.getenv("FRONTEND_URL", "http://localhost:5173"), "http://localhost:5173"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
