@@ -61,7 +61,7 @@ function App() {
       setData(parsAnalysis(json));
     } catch (err) {
       console.error(err);
-      alert("Analysis failed. See console.");
+      alert(`Analysis failed: ${err.message}`);
     } finally {
       setLoading(false);
     }
