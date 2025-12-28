@@ -305,11 +305,20 @@ function App() {
         </div>
       </div>
 
-      {/* Debug */}
-      <details className="raw-data" style={{ marginTop: '50px', opacity: 0.3 }}>
-        <summary>Raw JSON</summary>
-        <pre>{JSON.stringify(analysis, null, 2)}</pre>
-      </details>
+      {/* Version Indicator */}
+      <div style={{
+        position: 'fixed',
+        bottom: '10px',
+        right: '10px',
+        fontSize: '12px',
+        color: '#666',
+        backgroundColor: 'rgba(255,255,255,0.8)',
+        padding: '2px 6px',
+        borderRadius: '4px',
+        zIndex: 9999
+      }}>
+        v2.0 (Mobile Fix Applied)
+      </div>
     </div>
   );
 }
