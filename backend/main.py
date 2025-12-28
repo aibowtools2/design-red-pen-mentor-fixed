@@ -19,8 +19,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Ensure upload directory exists for production
+UPLOAD_DIR = "../watched_videos"
+if not os.path.exists(UPLOAD_DIR):
+    os.makedirs(UPLOAD_DIR)
+
 app.mount("/files", StaticFiles(directory="."), name="files")
-app.mount("/uploads", StaticFiles(directory="../watched_videos"), name="uploads")
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 @app.get("/")
 def read_root():
