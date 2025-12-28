@@ -2,7 +2,7 @@ import { useState } from 'react';
 import './App.css';
 
 // Fix Version: 1.2 (Force Rebuild)
-console.log("App Version: 2.1 - Mobile Image Compression Added");
+console.log("App Version: 2.2 - Aggressive Compression + Cancel Button");
 
 // Helper: Image Compression
 const compressImage = async (file) => {
@@ -21,8 +21,8 @@ const compressImage = async (file) => {
       let width = img.width;
       let height = img.height;
 
-      // Limit to 1500px (Good balance for API & Speed)
-      const maxDim = 1500;
+      // Limit to 1000px (More aggressive for Mobile 4G/5G)
+      const maxDim = 1000;
 
       if (width > height && width > maxDim) {
         height *= maxDim / width;
@@ -49,7 +49,7 @@ const compressImage = async (file) => {
         } else {
           reject(new Error("Compression failed"));
         }
-      }, 'image/jpeg', 0.8); // 80% Quality
+      }, 'image/jpeg', 0.6); // 60% Quality (High compression)
     };
 
     reader.readAsDataURL(file);
@@ -114,16 +114,25 @@ function App() {
     formData.append('purpose', form.purpose);
 
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+    // Timeout Promise (30 seconds)
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Request timed out")), 30000)
+    );
+
     try {
-      const res = await fetch(`${apiUrl}/analyze`, {
-        method: 'POST',
-        body: formData
-      });
+      const res = await Promise.race([
+        fetch(`${apiUrl}/analyze`, { method: 'POST', body: formData }),
+        timeout
+      ]);
+
+      if (!res.ok) throw new Error(`Server Error: ${res.status}`);
+
       const json = await res.json();
       setData(parsAnalysis(json));
     } catch (err) {
       console.error(err);
-      alert(`Analysis failed: ${err.message}`);
+      alert(`Analysis failed: ${err.message}. Please try a smaller image.`);
     } finally {
       setLoading(false);
     }
@@ -186,7 +195,7 @@ function App() {
       <div className="dashboard">
         <header className="hero">
           <h1 className="title">{text.title}</h1>
-          <p className="version-label">v2.1</p>
+          <p className="version-label">v2.2</p>
           <p className="subtitle" style={{ whiteSpace: 'pre-line' }}>{text.subtitle}</p>
         </header>
 
@@ -235,7 +244,17 @@ function App() {
 
             <div className="drop-zone-visual" style={{ margin: '30px 0', padding: '50px', border: '3px dashed rgba(255,255,255,0.2)' }}>
               {preview ? (
-                <img src={preview} alt="Preview" style={{ maxWidth: '100%', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }} />
+                <div style={{ position: 'relative' }}>
+                  <img src={preview} alt="Preview" style={{ maxWidth: '100%', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }} />
+                  <button
+                    type="button"
+                    className="remove-image-btn"
+                    onClick={() => { setFile(null); setPreview(null); }}
+                    title="Remove Image"
+                  >
+                    ×
+                  </button>
+                </div>
               ) : (
                 <div style={{ cursor: 'pointer', textAlign: 'center' }} onClick={() => document.getElementById('file-input').click()}>
                   <div style={{ fontSize: '3rem', marginBottom: '15px' }}>📤</div>
