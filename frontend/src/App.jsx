@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import './App.css';
 
+// Fix Version: 1.2 (Force Rebuild)
+console.log("App Version: 1.2 - Fixed useState import");
+
 function App() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
