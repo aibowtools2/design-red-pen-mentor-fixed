@@ -11,9 +11,25 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 from gemini_client import analyze_image_design
 
+# LINE Bot SDK
+from linebot import LineBotApi, WebhookHandler
+from linebot.exceptions import InvalidSignatureError
+from linebot.models import MessageEvent, TextMessage, ImageMessage, TextSendMessage
+
 load_dotenv()
 
 app = FastAPI()
+
+# LINE Config
+LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
+LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
+
+line_bot_api = None
+handler = None
+
+if LINE_CHANNEL_ACCESS_TOKEN and LINE_CHANNEL_SECRET:
+    line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
+    handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
 # Robust CORS Handling: Handle trailing slashes in env var
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
@@ -45,6 +61,75 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 @app.get("/")
 def read_root():
     return {"message": "Naruhodo Design AI API is running"}
+
+# --- LINE Bot Webhook ---
+from fastapi import Request, Header
+
+@app.post("/callback")
+async def callback(request: Request, x_line_signature: str = Header(None)):
+    if not handler:
+        return {"status": "error", "message": "LINE Bot not configured"}
+        
+    body = await request.body()
+    try:
+        handler.handle(body.decode("utf-8"), x_line_signature)
+    except InvalidSignatureError:
+        return {"status": "error", "message": "Invalid signature"}
+    return "OK"
+
+# LINE Message Handler
+if handler:
+    @handler.add(MessageEvent, message=ImageMessage)
+    def handle_image_message(event):
+        message_id = event.message.id
+        message_content = line_bot_api.get_message_content(message_id)
+        
+        # Save temp image
+        temp_filename = f"line_{message_id}.jpg"
+        temp_path = os.path.join(UPLOAD_DIR, temp_filename)
+        
+        with open(temp_path, 'wb') as fd:
+            for chunk in message_content.iter_content():
+                fd.write(chunk)
+                
+        # Reply "Processing..."
+        # Note: LINE only allows one reply per token usually, or push. 
+        # Using reply_message for the final result is safer if processing is fast (<30s).
+        # But Gemini might take 10s.
+        
+        try:
+            # Sync analysis (simplest for MVP)
+            context = {"type": "LINE Upload", "target": "Unknown", "purpose": "General Check"}
+            result_json_str = analyze_image_design(temp_path, context)
+            data = json.loads(result_json_str)
+            
+            # Format Reply Text
+            score = data.get('design_score', 0)
+            good_points = "\n".join([f"✅ {p}" for p in data.get('good_points', [])[:2]])
+            improvements = "\n".join([f"🔧 {i.get('issue','')} -> {i.get('suggestion','')}" for i in data.get('improvements', [])[:2]])
+            
+            reply_text = f"【添削完了】\n🏆 デザインスコア: {score}点\n\n{good_points}\n\n{improvements}\n\n詳細はWebで: https://design-sensei.aibowtools.com/"
+            
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text=reply_text)
+            )
+            
+            # (Optional) Save to History logic here if we had User ID...
+            
+        except Exception as e:
+            print(f"LINE Analysis Error: {e}")
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="申し訳ありません。分析中にエラーが発生しました。")
+            )
+
+    @handler.add(MessageEvent, message=TextMessage)
+    def handle_text_message(event):
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="画像を送信すると、デザイン赤ペン先生が添削します！")
+        )
 
 HISTORY_FILE = "history_log.json"
 
