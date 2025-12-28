@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.env
+
+# Node
+node_modules/
+dist/
+.DS_Store
+
+# User captures
+*.png
+*.jpg
+*.jpeg
+*.webp
+data.json

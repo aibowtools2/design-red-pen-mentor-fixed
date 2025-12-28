@@ -1,0 +1,47 @@
+{
+  "status": "success",
+  "design_score": 85,
+  "good_points": [
+    "明るい黄色を基調とした配色が、食欲をそそり、サービスの楽しげな雰囲気を効果的に演出しています。",
+    "左側にキャッチコピー、右側にアプリ画面というレイアウトが、サービスの便益と具体的な利用イメージを直感的に伝えています。",
+    "背景にうっすらと配置されたハンバーガーのパターンが、ブランドイメージを強化しつつ、デザインに奥行きを与えています。"
+  ],
+  "google_data_insights": {
+    "google_fonts_recommendation": {
+      "current_mood": "力強く安定感のあるゴシック体",
+      "suggested_font_name": "Noto Sans JP",
+      "reason": "現在のフォントは視認性が高いですが、Google Fontsの「Noto Sans JP」を導入することで、より幅広いユーザーに親しみやすさを与え、アプリUIのモダンな雰囲気との調和が30%向上します。"
+    },
+    "material_design_check": {
+      "metric": "Touch Target Size / Spacing",
+      "observation": "アプリ画面内のカテゴリ選択アイコン（ピザ、寿司など）のタップ可能領域が40dp四方程度に見えます。",
+      "verdict": "Warning",
+      "advice": "Material Designでは、主要なインタラクション要素のタップターゲットとして最低48x48dpを推奨しています。アイコン周囲の余白を含めて領域を確保し、ユーザーの誤操作を防ぎましょう。"
+    }
+  },
+  "improvements": [
+    {
+      "priority": "High",
+      "issue": "メインキャッチコピー内の文字の大きさが均一で、情報の優先順位が伝わりにくい。",
+      "suggestion": "「簡単・便利な」の部分を現状より15%小さくし、最も伝えたい「デリバリー体験」を20%大きくすることで、視覚的な階層を作り、メッセージのインパクトを強めます。",
+      "quantitative_value": "+20%",
+      "naruhodo_principle": "Importance Scale (Daiji-do Tenbin)"
+    },
+    {
+      "priority": "Medium",
+      "issue": "フローティングしている料理のアイコンに適用されている影が均一で、奥行き感に乏しい。",
+      "suggestion": "スマートフォン画面に近いピザのアイコンの影を濃く（不透明度50%）、奥にあるカレーのアイコンの影を薄く（不透明度30%）するなど、Z軸を意識して影を調整することで、より自然で立体的な空間を演出できます。",
+      "quantitative_value": "不透明度50% vs 30%",
+      "naruhodo_principle": "Depth (Z-axis)"
+    },
+    {
+      "priority": "Low",
+      "issue": "左下の検索バーがプレースホルダーとして機能しているが、ユーザーのアクションを喚起する力が弱い。",
+      "suggestion": "検索バー内に「例：ピザ、ハンバーガー」といった具体的な検索例を薄いグレーで表示することで、ユーザーが次に行うべきアクションを具体的に示唆し、エンゲージメントを高めます。",
+      "quantitative_value": "検索例の追加",
+      "naruhodo_principle": "Call to Action (Gyodo-unagashi)"
+    }
+  ],
+  "overall_comment": "全体的に非常に完成度が高く、サービスの魅力が伝わる素晴らしいデザインです。情報の優先順位付けと、細部の立体表現を少し調整するだけで、さらにユーザーの心を掴む、プロフェッショナルなクリエイティブに進化するでしょう。素晴らしいスタートです！",
+  "source_image": "スクリーンショット 2025-12-28 081509.png"
+}

@@ -1,0 +1,71 @@
+from fastapi import FastAPI, File, UploadFile, Form
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+import os
+import json
+import shutil
+from dotenv import load_dotenv
+from gemini_client import analyze_image_design
+
+load_dotenv()
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[os.getenv("FRONTEND_URL", "http://localhost:5173"), "http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.mount("/files", StaticFiles(directory="."), name="files")
+app.mount("/uploads", StaticFiles(directory="../watched_videos"), name="uploads")
+
+@app.get("/")
+def read_root():
+    return {"message": "Naruhodo Design AI API is running"}
+
+@app.get("/analysis")
+def get_analysis():
+    data_path = "data.json"
+    if os.path.exists(data_path):
+        with open(data_path, "r", encoding="utf-8") as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return {"status": "processing", "message": "Analyzing..."}
+    return {"status": "waiting", "message": "No analysis yet."}
+
+@app.post("/analyze")
+async def analyze_image(
+    file: UploadFile = File(...),
+    type: str = Form(""),
+    target: str = Form(""),
+    purpose: str = Form("")
+):
+    upload_dir = "../watched_videos"
+    if not os.path.exists(upload_dir):
+        os.makedirs(upload_dir)
+        
+    file_path = os.path.join(upload_dir, file.filename)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    print(f"Received Upload: {file.filename}")
+    print(f"Context: {type}, {target}, {purpose}")
+    
+    # Analyze with Context
+    context = {"type": type, "target": target, "purpose": purpose}
+    result_json_str = analyze_image_design(file_path, context)
+    
+    try:
+        data = json.loads(result_json_str)
+        data["source_image"] = file.filename
+        # Save locally
+        with open("data.json", "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+            
+        return data
+    except Exception as e:
+        return {"error": str(e), "raw_response": result_json_str}
