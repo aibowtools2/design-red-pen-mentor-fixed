@@ -221,7 +221,7 @@ def handle_event_background(event):
                     
                     score = data.get('design_score', 0)
                     good_points = "\n".join([f"✅ {p}" for p in data.get('good_points', [])[:2]])
-                    improvements = "\n".join([f"🔧 {i.get('issue','')} -> {i.get('suggestion','')}" for i in data.get('improvements', [])[:2]])
+                    improvements = "\n".join([f"🔧 {i.get('issue','')} -> {i.get('suggestion','')}" for i in data.get('improvements', [])[:2}])
                     
                     reply_text = f"【添削完了】\n🏆 デザインスコア: {score}点\n\n{good_points}\n\n{improvements}\n\n👇Web版ならもっと詳細な分析が見れます！\n(色・構図・フォントなど10項目以上)\nhttps://design-sensei.aibowtools.com/"
                     
@@ -415,16 +415,20 @@ def analyze_image(
     if not os.path.exists(upload_dir):
         os.makedirs(upload_dir)
         
-    file_path = os.path.join(upload_dir, file.filename)
+    # Create a unique filename to avoid collisions (especially for Test Mode's sample_test.png)
+    unique_filename = f"{uuid.uuid4()}_{file.filename}"
+    file_path = os.path.join(upload_dir, unique_filename)
+    
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-        
-    job_id = str(uuid.uuid4())
-    context = {"type": type, "target": target, "purpose": purpose}
     
-    # Register job immediately to avoid "not found" race condition
+    # Create Job ID
+    job_id = str(uuid.uuid4())
+    
+    # Store initial status
     JOBS[job_id] = {"status": "pending"}
     
+    # Start Background Task
     background_tasks.add_task(process_analysis_background, job_id, file_path, context, file.filename)
     
     return {"status": "accepted", "job_id": job_id}
