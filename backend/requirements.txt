@@ -1,6 +1,7 @@
 fastapi
 uvicorn
 python-multipart
+stripe
 google-generativeai
 python-dotenv
 requests

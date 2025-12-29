@@ -4,13 +4,25 @@ import { Link, useLocation } from 'react-router-dom';
 const Upgrade = () => {
     const location = useLocation();
     const [success, setSuccess] = useState(false);
+    const [uid, setUid] = useState(null);
 
     useEffect(() => {
         const query = new URLSearchParams(location.search);
         if (query.get('success')) {
             setSuccess(true);
         }
+        // Extract User ID from URL (e.g. ?uid=U12345...)
+        const userId = query.get('uid');
+        if (userId) {
+            setUid(userId);
+        }
     }, [location]);
+
+    // Construct Dynamic Stripe Link
+    const baseStripeUrl = "https://buy.stripe.com/fZu14macr0CH7Kh8KKaAw02";
+    const stripeUrl = uid
+        ? `${baseStripeUrl}?client_reference_id=${uid}`
+        : baseStripeUrl;
 
     if (success) {
         return (
@@ -57,7 +69,7 @@ const Upgrade = () => {
                 <div style={{ textAlign: 'center' }}>
                     {/* Stripe Payment Link */}
                     <a
-                        href="https://buy.stripe.com/fZu14macr0CH7Kh8KKaAw02"
+                        href={stripeUrl}
                         className="submit-btn"
                         style={{
                             display: 'inline-block',
@@ -76,6 +88,11 @@ const Upgrade = () => {
 
                 <div style={{ textAlign: 'center', marginTop: '20px' }}>
                     <p style={{ fontSize: '0.8rem', opacity: 0.7 }}>Stripeで安全に決済されます</p>
+                    {!uid && (
+                        <p style={{ color: '#ffcc00', fontSize: '0.8rem', marginTop: '10px' }}>
+                            ⚠️ 注意: LINEアプリからアクセスしないと、アカウント連携ができません。
+                        </p>
+                    )}
                 </div>
             </div>
 
