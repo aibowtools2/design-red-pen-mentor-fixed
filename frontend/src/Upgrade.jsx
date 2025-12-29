@@ -56,8 +56,16 @@ const Upgrade = () => {
 
             <div className="card" style={{ maxWidth: '600px', width: '100%', padding: '50px', border: '1px solid #FFD700', boxShadow: '0 0 30px rgba(255, 215, 0, 0.2)' }}>
                 <h2 style={{ textAlign: 'center', fontSize: '2rem', marginBottom: '20px' }}>Unlimited Access</h2>
-                <div style={{ textAlign: 'center', fontSize: '3rem', fontWeight: 'bold', color: '#FFD700', marginBottom: '30px' }}>
-                    ¥350 <span style={{ fontSize: '1rem', color: '#ccc' }}>/ 月額</span>
+                <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+                    <div style={{ fontSize: '1.2rem', color: '#aaa', textDecoration: 'line-through', marginBottom: '5px' }}>
+                        通常価格 ¥500
+                    </div>
+                    <div style={{ fontSize: '3.5rem', fontWeight: 'bold', color: '#FFD700', lineHeight: '1' }}>
+                        ¥350 <span style={{ fontSize: '1.2rem', color: '#ccc' }}>/ 月額</span>
+                    </div>
+                    <div style={{ fontSize: '1rem', color: '#ff4444', fontWeight: 'bold', marginTop: '10px', background: 'rgba(255, 68, 68, 0.1)', display: 'inline-block', padding: '5px 15px', borderRadius: '20px' }}>
+                        🔥 今だけ特別割引中
+                    </div>
                 </div>
 
                 <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 40px 0', fontSize: '1.1rem', lineHeight: '1.8' }}>
