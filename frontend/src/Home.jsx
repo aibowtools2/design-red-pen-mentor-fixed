@@ -57,6 +57,13 @@ const compressImage = async (file) => {
   });
 };
 
+const API_URL = import.meta.env.VITE_API_URL || 'https://design-red-pen-mentor.onrender.com';
+// Fallback for local dev
+const getEffectiveApiUrl = () => {
+  if (window.location.hostname === 'localhost') return 'http://localhost:8000';
+  return API_URL;
+};
+
 function Home() {
   const [data, setData] = useState(null);
   const [history, setHistory] = useState([]);
@@ -126,14 +133,7 @@ function Home() {
 
   // Improved Polling Logic with Loop
   const performAnalysis = async (formData) => {
-    let apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
-    // Safety check for production: if we are on the production domain but apiUrl is localhost, 
-    // it means environment variables aren't set correctly in Vercel. 
-    // Fallback to the known production Render URL.
-    if (window.location.hostname !== 'localhost' && apiUrl.includes('localhost')) {
-      apiUrl = 'https://design-red-pen-mentor.onrender.com';
-    }
+    const apiUrl = getEffectiveApiUrl();
 
     // Submit
     const res = await fetch(`${apiUrl}/analyze`, { method: 'POST', body: formData });
@@ -425,7 +425,7 @@ function Home() {
           <div className="left-col">
             <div className="image-preview card">
               {analysis.source_image ? (
-                <img src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/uploads/${analysis.source_image}`} alt="Analysis Source" />
+                <img src={`${getEffectiveApiUrl()}/uploads/${analysis.source_image}`} alt="Analysis Source" />
               ) : (
                 <div style={{ padding: '20px', textAlign: 'center' }}>Image Source Not Found</div>
               )}
@@ -570,7 +570,18 @@ function Home() {
         )}
       </div>
 
-
+      <footer className="footer" style={{ marginTop: '50px', padding: '40px 20px', borderTop: '1px solid rgba(255,255,255,0.1)', textAlign: 'center' }}>
+        <div style={{ marginBottom: '20px' }}>
+          <a href="/privacy" className="footer-link">プライバシーポリシー</a>
+          <span style={{ margin: '0 15px', color: 'rgba(255,255,255,0.3)' }}>|</span>
+          <a href="/terms" className="footer-link">利用規約</a>
+          <span style={{ margin: '0 15px', color: 'rgba(255,255,255,0.3)' }}>|</span>
+          <a href="/legal" className="footer-link">特定商取引法に基づく表記</a>
+        </div>
+        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem' }}>
+          &copy; {new Date().getFullYear()} AiBow Tools / AiBow Vision. All rights reserved.
+        </p>
+      </footer>
     </div>
   );
 }
