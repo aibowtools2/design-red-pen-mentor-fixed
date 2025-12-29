@@ -297,89 +297,76 @@ def process_analysis_background(job_id: str, file_path: str, context: dict, file
     """Background Task to run Gemini Analysis and save to DB"""
     try:
         print(f"DEBUG: Background Task Started for {job_id}")
-        # debug_log(f"START Job {job_id} for {filename}")
+        
+        # 1. Update status to 'processing'
         JOBS[job_id] = {"status": "processing"}
-        print(f"Job {job_id}: For {filename} started...")
-        
-        # Test DB connection early
-        # debug_log(f"Job {job_id}: Testing DB connection...")
         if SessionLocal:
-             try:
-                 # Just a quick check, don't keep session open
-                 with SessionLocal() as s:
-                     pass
-                 # debug_log(f"Job {job_id}: DB Connection OK")
-                 print(f"DEBUG: Job {job_id}: DB Connection OK")
-             except Exception as e:
-                 # debug_log(f"Job {job_id}: DB Connection FAILED {e}")
-                 print(f"DEBUG: Job {job_id}: DB Connection FAILED {e}")
+            with SessionLocal() as session:
+                log = session.query(AnalysisLog).filter(AnalysisLog.id == job_id).first()
+                if log:
+                    log.status = "processing"
+                    session.commit()
         
-        # debug_log(f"Job {job_id}: Calling Gemini API...")
         print(f"DEBUG: Job {job_id}: Calling Gemini API...")
         result_json_str = analyze_image_design(file_path, context)
-        # debug_log(f"Job {job_id}: Gemini API returned {len(result_json_str)} chars")
         print(f"DEBUG: Job {job_id}: Gemini API returned {len(result_json_str)} chars")
         
         try:
             data = json.loads(result_json_str)
             data["source_image"] = filename
             
-            # DB Storage
-            # debug_log(f"Job {job_id}: Saving to DB...")
-            print(f"DEBUG: Job {job_id}: Saving to DB...")
+            # 2. Update status and save result in DB
             if SessionLocal:
-                session = SessionLocal()
-                try:
-                    analysis_id = str(uuid.uuid4())
-                    timestamp = int(time.time())
-                    
-                    # Prepare Data for JSON Column
-                    data["id"] = analysis_id
-                    data["timestamp"] = timestamp
-                    
-                    log = AnalysisLog(
-                        id=analysis_id,
-                        user_id=None, # Web anonymous
-                        timestamp=timestamp,
-                        image_filename=filename,
-                        analysis_type=context.get("type", "Unknown"),
-                        design_score=data.get("design_score", 0),
-                        full_result=data
-                    )
-                    session.add(log)
-                    session.commit()
-                    # debug_log(f"Job {job_id}: Saved to DB successfully")
-                    print(f"DEBUG: Job {job_id}: Saved to DB successfully")
-                except Exception as e:
-                    logger.error(f"DB Save Error: {e}")
-                    # debug_log(f"Job {job_id}: DB Save Error: {e}")
-                    print(f"DEBUG: Job {job_id}: DB Save Error: {e}")
-                finally:
-                    session.close()
-                
+                with SessionLocal() as session:
+                    log = session.query(AnalysisLog).filter(AnalysisLog.id == job_id).first()
+                    if log:
+                        log.status = "completed"
+                        log.design_score = data.get("design_score", 0)
+                        log.full_result = data
+                        session.commit()
+                        print(f"DEBUG: Job {job_id}: Saved to DB successfully")
+            
             JOBS[job_id] = {"status": "completed", "data": data}
-            # debug_log(f"Job {job_id}: Status set to COMPLETED")
-            print(f"DEBUG: Job {job_id}: Status set to COMPLETED")
             print(f"Job {job_id}: Completed successfully.")
             
         except Exception as e:
             logger.error(f"Job {job_id} JSON Parsing Error: {e}")
-            # debug_log(f"Job {job_id} JSON Parsing Error: {e}")
-            print(f"DEBUG: Job {job_id} JSON Parsing Error: {e}")
             JOBS[job_id] = {"status": "failed", "error": f"JSON Parse Error: {e}", "raw": result_json_str}
+            if SessionLocal:
+                with SessionLocal() as session:
+                    log = session.query(AnalysisLog).filter(AnalysisLog.id == job_id).first()
+                    if log:
+                        log.status = "failed"
+                        session.commit()
             
     except Exception as e:
         logger.error(f"Analysis failed: {e}")
-        print(f"DEBUG: Background Task Failed: {e}")
-        # debug_log(f"Job {job_id} Fatal Error: {e}")
         JOBS[job_id] = {"status": "failed", "error": str(e)}
+        if SessionLocal:
+            with SessionLocal() as session:
+                log = session.query(AnalysisLog).filter(AnalysisLog.id == job_id).first()
+                if log:
+                    log.status = "failed"
+                    session.commit()
 
 @app.get("/status/{job_id}")
 def get_job_status(job_id: str):
-    job = JOBS.get(job_id)
-    if not job:
-        return {"status": "not_found"}
-    return job
+    """Check status of background task (uses DB to support multi-worker environments)"""
+    # 1. Check local memory (fastest)
+    if job_id in JOBS:
+        return JOBS[job_id]
+    
+    # 2. Check Database (reliable for multi-worker Render/Gunicorn)
+    if SessionLocal:
+        with SessionLocal() as session:
+            log = session.query(AnalysisLog).filter(AnalysisLog.id == job_id).first()
+            if log:
+                # If completed, return data
+                if log.status == "completed":
+                    return {"status": "completed", "data": log.full_result}
+                return {"status": log.status}
+    
+    return {"status": "not_found"}
 
 @app.get("/history")
 def get_history():
@@ -435,18 +422,38 @@ def analyze_image(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     
-    # Create Job ID
-    job_id = str(uuid.uuid4())
+    # Create Job ID (Analysis ID)
+    analysis_id = str(uuid.uuid4())
+    timestamp = int(time.time())
     
-    # Store initial status
-    JOBS[job_id] = {"status": "pending"}
+    # Store initial status in DB (to support cross-worker coordination)
+    if SessionLocal:
+        with SessionLocal() as session:
+            try:
+                log = AnalysisLog(
+                    id=analysis_id,
+                    user_id=None,
+                    timestamp=timestamp,
+                    image_filename=unique_filename,
+                    analysis_type=type or "Unknown",
+                    status="pending"
+                )
+                session.add(log)
+                session.commit()
+            except Exception as e:
+                logger.error(f"Failed to init Job in DB: {e}")
+                # Fallback to local dict for local dev safety, 
+                # but production relies on DB.
+                JOBS[analysis_id] = {"status": "pending"}
+    else:
+        JOBS[analysis_id] = {"status": "pending"}
     
     context = {"type": type, "target": target, "purpose": purpose}
     
     # Start Background Task
-    background_tasks.add_task(process_analysis_background, job_id, file_path, context, unique_filename)
+    background_tasks.add_task(process_analysis_background, analysis_id, file_path, context, unique_filename)
     
-    return {"status": "accepted", "job_id": job_id}
+    return {"status": "accepted", "job_id": analysis_id}
 
 # Fallback to serve index.html for SPA (Must be last)
 @app.get("/{full_path:path}", include_in_schema=False)

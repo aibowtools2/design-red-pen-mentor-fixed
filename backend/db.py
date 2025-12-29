@@ -45,6 +45,7 @@ class AnalysisLog(Base):
     image_filename = Column(String)
     analysis_type = Column(String)
     design_score = Column(Integer)
+    status = Column(String, default="pending") # pending, processing, completed, failed
     
     # Store full JSON result
     full_result = Column(JSON) 
