@@ -102,6 +102,26 @@ function Home() {
     }
   };
 
+  // --- DEMO / TEST MODE ---
+  const fillDemoData = async () => {
+    setForm({
+      type: 'Poster',
+      target: '20代〜30代の働く女性（美容に関心）',
+      purpose: '新発売のオーガニックコスメの認知拡大と購入促進'
+    });
+
+    try {
+      const res = await fetch('/sample_test.png');
+      const blob = await res.blob();
+      const demoFile = new File([blob], "sample_test.png", { type: "image/png" });
+
+      setFile(demoFile);
+      setPreview(URL.createObjectURL(demoFile));
+    } catch (e) {
+      alert("Demo image not found. Please ensure 'sample_test.png' is in public folder.");
+    }
+  };
+
 
 
   // Improved Polling Logic with Loop
@@ -278,7 +298,10 @@ function Home() {
     return (
       <div className="dashboard">
         <header className="hero">
-          <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', padding: '0 20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', padding: '0 20px', gap: '10px' }}>
+            <button onClick={fillDemoData} style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', padding: '5px 15px', borderRadius: '20px', cursor: 'pointer' }}>
+              🧪 Test Mode
+            </button>
             <Link to="/upgrade" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 'bold', border: '1px solid #FFD700', padding: '5px 15px', borderRadius: '20px' }}>
               👑 Upgrade
             </Link>
