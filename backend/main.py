@@ -357,7 +357,7 @@ def get_analysis():
     return {"status": "waiting", "message": "No analysis yet."}
 
 @app.post("/analyze")
-async def analyze_image(
+def analyze_image(
     file: UploadFile = File(...),
     type: str = Form(""),
     target: str = Form(""),
