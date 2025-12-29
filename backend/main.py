@@ -68,6 +68,40 @@ def read_root():
 # --- LINE Bot Webhook (Async) ---
 from fastapi import Request, Header
 
+# Usage Tracking Logic
+USAGE_FILE = "user_usage.json"
+import time 
+
+def check_and_update_usage(user_id: str) -> bool:
+    """
+    Check if user has already used the service today.
+    Returns True if allowed, False if limit reached.
+    """
+    today_str = time.strftime("%Y-%m-%d")
+    usage_data = {}
+
+    if os.path.exists(USAGE_FILE):
+        try:
+            with open(USAGE_FILE, "r", encoding="utf-8") as f:
+                usage_data = json.load(f)
+        except:
+            pass
+    
+    last_used = usage_data.get(user_id)
+    
+    if last_used == today_str:
+        return False
+    
+    # Update usage
+    usage_data[user_id] = today_str
+    try:
+        with open(USAGE_FILE, "w", encoding="utf-8") as f:
+            json.dump(usage_data, f)
+    except:
+        pass # Best effort
+        
+    return True
+
 def handle_event_background(event):
     """
     Background Task: Process individual LINE event
@@ -75,12 +109,24 @@ def handle_event_background(event):
     try:
         # Only handle Text and Image messages
         if isinstance(event, MessageEvent):
+            user_id = event.source.user_id
+            
             if isinstance(event.message, TextMessage):
                  line_bot_api.reply_message(
                     event.reply_token,
                     TextSendMessage(text="画像を送信すると、デザイン赤ペン先生が添削します！")
                 )
             elif isinstance(event.message, ImageMessage):
+                
+                # --- Daily Limit Check ---
+                if not check_and_update_usage(user_id):
+                    line_bot_api.reply_message(
+                        event.reply_token,
+                        TextSendMessage(text="⚠️ 本日の無料添削は終了しました。\n(1日1回まで無料です)\n\n👇月額350円で無制限プランに参加！\nhttps://design-sensei.aibowtools.com/upgrade")
+                    )
+                    return
+                # -------------------------
+
                 message_id = event.message.id
                 message_content = line_bot_api.get_message_content(message_id)
                 
@@ -91,11 +137,6 @@ def handle_event_background(event):
                 with open(temp_path, 'wb') as fd:
                     for chunk in message_content.iter_content():
                         fd.write(chunk)
-                
-                # Reply "Processing..." to give immediate feedback (Optional, but good UX)
-                # But reply_token can only be used once. 
-                # Strategy: Just wait for analysis and send ONE reply. 
-                # (Since we are in background, blocking here is fine, user just waits 10s)
                 
                 try:
                     # Sync analysis
@@ -125,6 +166,7 @@ def handle_event_background(event):
                         )
                     except:
                         pass
+
 
     except Exception as e:
         print(f"Background Task Error: {e}")
