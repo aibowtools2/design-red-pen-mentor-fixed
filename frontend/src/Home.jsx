@@ -350,6 +350,43 @@ function Home() {
               )}
             </div>
 
+            {/* 10-Point Analysis Grid */}
+            <div className="card" style={{ marginTop: '30px' }}>
+              <h3 className="section-title">📉 10項目 詳細スコア</h3>
+              {analysis.detailed_metrics ? (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  {[
+                    ['配色', 'color_palette'],
+                    ['構図', 'composition'],
+                    ['文字', 'typography'],
+                    ['対比', 'contrast'],
+                    ['均衡', 'balance'],
+                    ['優先順位', 'hierarchy'],
+                    ['伝達力', 'clarity'],
+                    ['独創性', 'originality'],
+                    ['適合性', 'relevance'],
+                    ['第一印象', 'impact']
+                  ].map(([label, key]) => {
+                    const item = analysis.detailed_metrics[key] || { score: 0, comment: 'N/A' };
+                    return (
+                      <div key={key} style={{ background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                          <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{label}</span>
+                          <span style={{ color: 'var(--accent-green)', fontWeight: 'bold' }}>{item.score}/10</span>
+                        </div>
+                        <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginBottom: '5px' }}>
+                          <div style={{ width: `${item.score * 10}%`, height: '100%', background: 'var(--accent-green)', borderRadius: '2px' }}></div>
+                        </div>
+                        <p style={{ fontSize: '0.75rem', opacity: 0.7, margin: 0 }}>{item.comment}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p style={{ opacity: 0.6 }}>詳細データがありません</p>
+              )}
+            </div>
+
             <div className="card" style={{ marginTop: '30px' }}>
               <h3 className="section-title">👍 Good Points</h3>
               {analysis.good_points && analysis.good_points.map((point, i) => (

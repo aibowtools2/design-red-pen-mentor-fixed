@@ -76,6 +76,18 @@ def analyze_image_design(image_path, context=None):
     {{
         "status": "success",
         "design_score": 85,
+        "detailed_metrics": {{
+            "color_palette": {{"score": 8, "comment": "Good harmony but low contrast."}},
+            "composition": {{"score": 7, "comment": "Rule of thirds is weak."}},
+            "typography": {{"score": 9, "comment": "Excellent font choice."}},
+            "contrast": {{"score": 6, "comment": "Needs more punch."}},
+            "balance": {{"score": 8, "comment": "Well balanced."}},
+            "hierarchy": {{"score": 7, "comment": "Eye flow is clear."}},
+            "clarity": {{"score": 9, "comment": "Easy to read."}},
+            "originality": {{"score": 5, "comment": "A bit generic."}},
+            "relevance": {{"score": 9, "comment": "Fits the target well."}},
+            "impact": {{"score": 7, "comment": "Memorable."}}
+        }},
         "good_points": [
             "Your use of whitespace around the logo is excellent.",
             "The color palette (#FF5500) effectively conveys energy."
@@ -104,6 +116,11 @@ def analyze_image_design(image_path, context=None):
         ],
         "overall_comment": "A brief, encouraging summary in Japanese."
     }}
+    
+    Ensure "detailed_metrics" contains exactly these 10 keys: 
+    color_palette (配色), composition (構図), typography (文字), contrast (対比), balance (バランス),
+    hierarchy (優先順位), clarity (情報伝達), originality (独創性), relevance (目的適合), impact (第一印象).
+    All scores 1-10. Comments in Japanese.
     
     Ensure ALL text values (comments, suggestions) are in **Japanese**.
     """
