@@ -14,6 +14,8 @@ dist/
 *.jpg
 *.jpeg
 *.webp
+!frontend/public/*.png
+!frontend/public/*.jpg
 data.json
 watched_videos/
 *.mp4
