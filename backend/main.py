@@ -455,6 +455,46 @@ def analyze_image(
     
     return {"status": "accepted", "job_id": analysis_id}
 
+@app.post("/stripe-webhook")
+async def stripe_webhook(request: Request):
+    """Webhook to handle Stripe payment events (Automated Premium Linking)"""
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature")
+    
+    if not STRIPE_WEBHOOK_SECRET:
+        logger.error("STRIPE_WEBHOOK_SECRET not set")
+        raise HTTPException(status_code=400, detail="Webhook Secret Not Configured")
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError as e:
+        # Invalid payload
+        raise HTTPException(status_code=400, detail="Invalid payload")
+    except stripe.error.SignatureVerificationError as e:
+        # Invalid signature
+        raise HTTPException(status_code=400, detail="Invalid signature")
+
+    # Handle the event
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        
+        # client_reference_id contains the LINE User ID (passed from Upgrade.jsx)
+        user_id = session.get('client_reference_id')
+        
+        if user_id:
+            logger.info(f"Payment success for user: {user_id}. Upgrading to premium...")
+            update_premium_status(user_id, "monthly")
+        else:
+            logger.warning("Payment success but client_reference_id (UserID) missing in Stripe session.")
+
+    elif event['type'] == 'customer.subscription.deleted':
+        # Optional: Handle cancellation
+        pass
+
+    return {"status": "success"}
+
 # Fallback to serve index.html for SPA (Must be last)
 @app.get("/{full_path:path}", include_in_schema=False)
 async def catch_all(full_path: str):
