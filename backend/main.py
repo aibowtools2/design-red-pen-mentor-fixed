@@ -70,13 +70,28 @@ from fastapi import Request, Header
 
 # Usage Tracking Logic
 USAGE_FILE = "user_usage.json"
+PREMIUM_FILE = "premium_users.json"
 import time 
+
+def is_premium(user_id: str) -> bool:
+    """Check if user is in premium list"""
+    if os.path.exists(PREMIUM_FILE):
+        try:
+            with open(PREMIUM_FILE, "r", encoding="utf-8") as f:
+                premium_users = json.load(f)
+                return user_id in premium_users
+        except:
+            pass
+    return False
 
 def check_and_update_usage(user_id: str) -> bool:
     """
     Check if user has already used the service today.
     Returns True if allowed, False if limit reached.
     """
+    if is_premium(user_id):
+        return True
+
     today_str = time.strftime("%Y-%m-%d")
     usage_data = {}
 
