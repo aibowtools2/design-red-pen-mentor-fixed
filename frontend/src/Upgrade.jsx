@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+// Rebuild trigger 2025-12-29
 import { Link, useLocation } from 'react-router-dom';
 
 const Upgrade = () => {
