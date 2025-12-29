@@ -18,7 +18,7 @@ if API_KEY:
 # "gemini-1.5-pro-latest" is the stable multimodal workhorse.
 # "gemini-exp-1206" (Gemini 2.0 Flash) is faster if available.
 # ... existing code ...
-IMAGE_MODEL_NAME = "gemini-1.5-flash-latest"
+IMAGE_MODEL_NAME = "gemini-flash-latest"
 
 def analyze_image_design(image_path, context=None):
     """
@@ -138,11 +138,25 @@ def analyze_image_design(image_path, context=None):
     
     print(f"Analyzing Image with {IMAGE_MODEL_NAME}...")
     try:
-        response = model.generate_content(
-            [image_file, prompt],
-            generation_config={"response_mime_type": "application/json"}
-        )
-        return response.text
+        # Try with JSON mode first
+        try:
+            response = model.generate_content(
+                [image_file, prompt],
+                generation_config={"response_mime_type": "application/json"}
+            )
+            return response.text
+        except Exception as json_mode_err:
+            print(f"JSON mode failed, falling back to text: {json_mode_err}")
+            # Fallback: remove JSON mode if not supported
+            response = model.generate_content([image_file, prompt])
+            # Extract JSON from code blocks if present
+            text = response.text
+            if "```json" in text:
+                text = text.split("```json")[1].split("```")[0].strip()
+            elif "```" in text:
+                text = text.split("```")[1].split("```")[0].strip()
+            return text
+            
     except Exception as e:
         print(f"Analysis failed: {e}")
         return json.dumps({"error": str(e)})
