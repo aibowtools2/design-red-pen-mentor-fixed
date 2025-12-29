@@ -37,12 +37,12 @@ def analyze_image_design(image_path, context=None):
         time.sleep(1)
         image_file = genai.get_file(image_file.name)
 
-    # Build Context String
+    # Build Context String (Sanitized with character limits)
     context_str = ""
     if context:
-        c_type = context.get('type', 'N/A')
-        c_target = context.get('target', 'General')
-        c_purpose = context.get('purpose', 'N/A')
+        c_type = str(context.get('type', 'N/A'))[:100]
+        c_target = str(context.get('target', 'General'))[:100]
+        c_purpose = str(context.get('purpose', 'N/A'))[:100]
         
         context_str = f"""
     CONTEXT OF THIS DESIGN:

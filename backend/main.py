@@ -83,7 +83,7 @@ UPLOAD_DIR = os.path.join(tempfile.gettempdir(), "design_uploads")
 if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
 
-app.mount("/files", StaticFiles(directory="."), name="files")
+# app.mount("/files", StaticFiles(directory="."), name="files") # REMOVED: SECURITY RISK (Exposed whole source folder)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # Fallback to serve index.html for SPA
@@ -415,8 +415,17 @@ def analyze_image(
     target: str = Form(""),
     purpose: str = Form("")
 ):
-    # Create a unique filename to avoid collisions (especially for Test Mode's sample_test.png)
-    unique_filename = f"{uuid.uuid4()}_{file.filename}"
+    # Security: Limit file size (e.g., 10MB)
+    MAX_SIZE = 10 * 1024 * 1024
+    file.file.seek(0, os.SEEK_END)
+    size = file.file.tell()
+    file.file.seek(0)
+    if size > MAX_SIZE:
+        raise HTTPException(status_code=400, detail="File too large (Max 10MB)")
+
+    # Security: Clean unique filename to avoid path traversal
+    clean_original_name = "".join([c for c in file.filename if c.isalnum() or c in "._-"])
+    unique_filename = f"{uuid.uuid4()}_{clean_original_name}"
     file_path = os.path.join(UPLOAD_DIR, unique_filename)
     
     with open(file_path, "wb") as buffer:
