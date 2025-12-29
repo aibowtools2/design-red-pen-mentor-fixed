@@ -510,16 +510,19 @@ async def stripe_webhook(request: Request):
 
     # Handle the event
     if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
+        session_obj = event['data']['object']
         
-        # client_reference_id contains the LINE db.User ID (passed from Upgrade.jsx)
-        user_id = session.get('client_reference_id')
+        # client_reference_id contains the LINE User ID
+        user_id = session_obj.get('client_reference_id')
+        customer_email = session_obj.get('customer_details', {}).get('email')
+        
+        logger.info(f"WEBHOOK: Received session completed. UserID: {user_id}, Email: {customer_email}")
         
         if user_id:
-            logger.info(f"Payment success for user: {user_id}. Upgrading to premium...")
+            logger.info(f"Payment success for user: {user_id}. Executing update_premium_status...")
             update_premium_status(user_id, "monthly")
         else:
-            logger.warning("Payment success but client_reference_id (UserID) missing in Stripe session.")
+            logger.warning(f"WEBHOOK: Payment success but client_reference_id (UserID) missing in Stripe session. EventID: {event['id']}")
 
     elif event['type'] == 'customer.subscription.deleted':
         # Optional: Handle cancellation
