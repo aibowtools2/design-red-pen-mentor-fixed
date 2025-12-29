@@ -16,9 +16,7 @@ import tempfile
 from gemini_client import analyze_image_design
 
 # Database Imports
-
-# Force Reload Triggered
-from db import init_db, get_db, User, AnalysisLog, SessionLocal
+import db
 from sqlalchemy.orm import Session
 
 # LINE Bot SDK
@@ -38,7 +36,7 @@ app = FastAPI()
 # Initialize DB on Startup
 @app.on_event("startup")
 def on_startup():
-    init_db()
+    db.init_db()
 
 # Config
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
@@ -97,11 +95,11 @@ def read_root():
 
 def is_premium(user_id: str) -> bool:
     """Check if user is premium using DB"""
-    if not SessionLocal: return False # Fallback if DB invalid
+    if not db.SessionLocal: return False # Fallback if DB invalid
     
-    session = SessionLocal()
+    session = db.SessionLocal()
     try:
-        user = session.query(User).filter(User.user_id == user_id).first()
+        user = session.query(db.User).filter(db.User.user_id == user_id).first()
         if not user:
             return False
             
@@ -119,11 +117,11 @@ def is_premium(user_id: str) -> bool:
 
 def update_premium_status(user_id: str, plan_type: str = "monthly"):
     """Update or Add user to premium list with expiry in DB"""
-    if not SessionLocal: return
+    if not db.SessionLocal: return
     
-    session = SessionLocal()
+    session = db.SessionLocal()
     try:
-        user = session.query(User).filter(User.user_id == user_id).first()
+        user = session.query(db.User).filter(db.User.user_id == user_id).first()
         
         now = datetime.datetime.utcnow()
         if plan_type == "monthly":
@@ -137,7 +135,7 @@ def update_premium_status(user_id: str, plan_type: str = "monthly"):
             user.plan_type = plan_type
             user.updated_at = now
         else:
-            user = User(
+            user = db.User(
                 user_id=user_id,
                 is_premium=True,
                 premium_expiry=expiry,
@@ -157,13 +155,13 @@ def update_premium_status(user_id: str, plan_type: str = "monthly"):
 
 def save_analysis_log(job_id, user_id, filename, analysis_type, data, status="completed"):
     """Helper to save analysis results to Supabase"""
-    if not SessionLocal: return
+    if not db.SessionLocal: return
     try:
-        with SessionLocal() as session:
+        with db.SessionLocal() as session:
             # Check if exists
-            log = session.query(AnalysisLog).filter(AnalysisLog.id == job_id).first()
+            log = session.query(db.AnalysisLog).filter(db.AnalysisLog.id == job_id).first()
             if not log:
-                log = AnalysisLog(id=job_id, user_id=user_id)
+                log = db.AnalysisLog(id=job_id, user_id=user_id)
                 session.add(log)
             
             log.timestamp = int(time.time())
@@ -181,20 +179,20 @@ def save_analysis_log(job_id, user_id, filename, analysis_type, data, status="co
 
 def check_and_update_usage(user_id: str) -> bool:
     """Check daily usage limit using DB"""
-    if not SessionLocal: return True # Fail open if DB issue
+    if not db.SessionLocal: return True # Fail open if DB issue
     
     # If premium, unlimited
     if is_premium(user_id):
         return True
         
-    session = SessionLocal()
+    session = db.SessionLocal()
     try:
-        user = session.query(User).filter(User.user_id == user_id).first()
+        user = session.query(db.User).filter(db.User.user_id == user_id).first()
         today_str = datetime.datetime.utcnow().strftime("%Y-%m-%d")
         
         if not user:
             # New user, create record
-            user = User(user_id=user_id, last_free_usage_date=today_str)
+            user = db.User(user_id=user_id, last_free_usage_date=today_str)
             session.add(user)
             session.commit()
             return True
@@ -338,9 +336,9 @@ def process_analysis_background(job_id: str, file_path: str, context: dict, file
         
         # 1. Update status to 'processing'
         JOBS[job_id] = {"status": "processing"}
-        if SessionLocal:
-            with SessionLocal() as session:
-                log = session.query(AnalysisLog).filter(AnalysisLog.id == job_id).first()
+        if db.SessionLocal:
+            with db.SessionLocal() as session:
+                log = session.query(db.AnalysisLog).filter(db.AnalysisLog.id == job_id).first()
                 if log:
                     log.status = "processing"
                     session.commit()
@@ -367,9 +365,9 @@ def process_analysis_background(job_id: str, file_path: str, context: dict, file
     except Exception as e:
         logger.error(f"Analysis failed: {e}")
         JOBS[job_id] = {"status": "failed", "error": str(e)}
-        if SessionLocal:
-            with SessionLocal() as session:
-                log = session.query(AnalysisLog).filter(AnalysisLog.id == job_id).first()
+        if db.SessionLocal:
+            with db.SessionLocal() as session:
+                log = session.query(db.AnalysisLog).filter(db.AnalysisLog.id == job_id).first()
                 if log:
                     log.status = "failed"
                     session.commit()
@@ -382,9 +380,9 @@ def get_job_status(job_id: str):
         return JOBS[job_id]
     
     # 2. Check Database (reliable for multi-worker Render/Gunicorn)
-    if SessionLocal:
-        with SessionLocal() as session:
-            log = session.query(AnalysisLog).filter(AnalysisLog.id == job_id).first()
+    if db.SessionLocal:
+        with db.SessionLocal() as session:
+            log = session.query(db.AnalysisLog).filter(db.AnalysisLog.id == job_id).first()
             if log:
                 # If completed, return data
                 if log.status == "completed":
@@ -396,12 +394,12 @@ def get_job_status(job_id: str):
 @app.get("/history")
 def get_history():
     """Retrieve history from DB"""
-    if not SessionLocal: return []
+    if not db.SessionLocal: return []
     
-    session = SessionLocal()
+    session = db.SessionLocal()
     try:
         # Get latest 50
-        logs = session.query(AnalysisLog).order_by(AnalysisLog.timestamp.desc()).limit(50).all()
+        logs = session.query(db.AnalysisLog).order_by(db.AnalysisLog.timestamp.desc()).limit(50).all()
         result = []
         for log in logs:
             result.append({
@@ -421,11 +419,11 @@ def get_history():
 @app.get("/history/{analysis_id}")
 def get_history_item(analysis_id: str):
     """Retrieve single item from DB"""
-    if not SessionLocal: return {"error": "DB not available"}
+    if not db.SessionLocal: return {"error": "DB not available"}
     
-    session = SessionLocal()
+    session = db.SessionLocal()
     try:
-        log = session.query(AnalysisLog).filter(AnalysisLog.id == analysis_id).first()
+        log = session.query(db.AnalysisLog).filter(db.AnalysisLog.id == analysis_id).first()
         if log:
             return log.full_result
         return {"error": "History item not found"}
@@ -461,10 +459,10 @@ def analyze_image(
     timestamp = int(time.time())
     
     # Store initial status in DB (to support cross-worker coordination)
-    if SessionLocal:
-        with SessionLocal() as session:
+    if db.SessionLocal:
+        with db.SessionLocal() as session:
             try:
-                log = AnalysisLog(
+                log = db.AnalysisLog(
                     id=analysis_id,
                     user_id=None,
                     timestamp=timestamp,
@@ -514,7 +512,7 @@ async def stripe_webhook(request: Request):
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
         
-        # client_reference_id contains the LINE User ID (passed from Upgrade.jsx)
+        # client_reference_id contains the LINE db.User ID (passed from Upgrade.jsx)
         user_id = session.get('client_reference_id')
         
         if user_id:
