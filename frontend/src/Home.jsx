@@ -222,14 +222,49 @@ function Home() {
 
   // --- RENDER ---
 
-  // 1. Loading
+  // Tips for Loading Screen
+  const tips = [
+    "💡 余白（ホワイトスペース）は「何もない」ではなく「洗練」を生みます。",
+    "💡 見出しと本文のコントラスト（ジャンプ率）を意識しましょう。",
+    "💡 3色以上の色を使うときは、メインカラー:サブ:アクセント=70:25:5 を目安に。",
+    "💡 「揃える」ことは、デザインを整理する基本です。",
+    "💡 フォントは最大でも2〜3種類に抑えると統一感が出ます。",
+    "💡 視線は「Z」の文字を描くように移動します。",
+    "💡 近接（近付ける）、整列（並べる）、反復（繰り返す）、対比（差をつける）",
+    "💡 写真の上に文字を載せるときは、明度差を確保しましょう。",
+  ];
+  const [currentTip, setCurrentTip] = useState(0);
+
+  useEffect(() => {
+    if (loading) {
+      const interval = setInterval(() => {
+        setCurrentTip((prev) => (prev + 1) % tips.length);
+      }, 4000);
+      return () => clearInterval(interval);
+    }
+  }, [loading]);
+
+  // Loading UI
   if (loading) {
     return (
-      <div className="dashboard">
-        <div className="empty-state">
-          <div className="spinner">✏️</div>
-          <h2>{text.loading}</h2>
-          <p>{text.analyzing} {isJa ? text.types[form.type] : form.type}</p>
+      <div className="dashboard" style={{ justifyContent: 'center', alignItems: 'center', minHeight: '100vh', display: 'flex' }}>
+        <div className="empty-state" style={{ maxWidth: '500px' }}>
+          <div className="spinner-large"></div>
+          <h2 style={{ marginTop: '20px', fontSize: '1.5rem' }}>{text.loading}</h2>
+          <p style={{ opacity: 0.7, marginBottom: '30px' }}>
+            {text.analyzing} {isJa ? text.types[form.type] : form.type}
+          </p>
+
+          <div className="tips-box" style={{
+            background: 'rgba(255,255,255,0.05)',
+            padding: '20px',
+            borderRadius: '12px',
+            border: '1px solid rgba(255,255,255,0.1)',
+            animation: 'fadeIn 0.5s ease-in-out'
+          }}>
+            <strong style={{ display: 'block', marginBottom: '10px', color: '#FFD700' }}>Design Tip:</strong>
+            <p style={{ margin: 0, fontSize: '1rem', lineHeight: '1.6' }}>{tips[currentTip]}</p>
+          </div>
         </div>
       </div>
     )
