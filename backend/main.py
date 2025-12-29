@@ -227,7 +227,7 @@ def handle_event_background(event):
                     
                     score = data.get('design_score', 0)
                     good_points = "\n".join([f"✅ {p}" for p in data.get('good_points', [])[:2]])
-                    improvements = "\n".join([f"🔧 {i.get('issue','')} -> {i.get('suggestion','')}" for i in data.get('improvements', [])[:2}])
+                    improvements = "\n".join([f"🔧 {i.get('issue','')} -> {i.get('suggestion','')}" for i in data.get('improvements', [])[:2]])
                     
                     reply_text = f"【添削完了】\n🏆 デザインスコア: {score}点\n\n{good_points}\n\n{improvements}\n\n👇Web版ならもっと詳細な分析が見れます！\n(色・構図・フォントなど10項目以上)\nhttps://design-sensei.aibowtools.com/"
                     
