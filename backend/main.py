@@ -260,6 +260,7 @@ async def callback(request: Request, background_tasks: BackgroundTasks, x_line_s
     return "OK"
 
 # --- Stripe Webhook ---
+@app.post("/stripe-webhook")
 @app.post("/stripe_webhook")
 async def stripe_webhook(request: Request):
     payload = await request.body()
