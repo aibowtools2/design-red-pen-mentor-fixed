@@ -155,6 +155,28 @@ def update_premium_status(user_id: str, plan_type: str = "monthly"):
     finally:
         session.close()
 
+def save_analysis_log(job_id, user_id, filename, analysis_type, data, status="completed"):
+    """Helper to save analysis results to Supabase"""
+    if not SessionLocal: return
+    try:
+        with SessionLocal() as session:
+            # Check if exists
+            log = session.query(AnalysisLog).filter(AnalysisLog.id == job_id).first()
+            if not log:
+                log = AnalysisLog(id=job_id, user_id=user_id)
+                session.add(log)
+            
+            log.timestamp = int(time.time())
+            log.image_filename = filename
+            log.analysis_type = analysis_type
+            log.design_score = data.get("design_score", 0)
+            log.status = status
+            log.full_result = data
+            session.commit()
+            logger.info(f"Saved analysis log {job_id} to DB")
+    except Exception as e:
+        logger.error(f"Failed to save analysis log to DB: {e}")
+
 # --- LINE Bot Logic (DB Version) ---
 
 def check_and_update_usage(user_id: str) -> bool:
@@ -223,7 +245,22 @@ def handle_event_background(event):
                 try:
                     context = {"type": "LINE Upload", "target": "Unknown", "purpose": "General Check"}
                     result_json_str = analyze_image_design(temp_path, context)
-                    data = json.loads(result_json_str)
+                    logger.info(f"Gemini Raw Result for LINE: {result_json_str}")
+                    
+                    try:
+                        data = json.loads(result_json_str)
+                    except Exception as parse_err:
+                        logger.error(f"Failed to parse Gemini JSON: {parse_err}")
+                        data = {"design_score": 0, "good_points": ["解析エラーが発生しました"], "improvements": []}
+
+                    # --- Save to Supabase ---
+                    save_analysis_log(
+                        job_id=f"line_{message_id}",
+                        user_id=user_id,
+                        filename=temp_filename,
+                        analysis_type="LINE Analysis",
+                        data=data
+                    )
                     
                     score = data.get('design_score', 0)
                     good_points = "\n".join([f"✅ {p}" for p in data.get('good_points', [])[:2]])
@@ -317,15 +354,7 @@ def process_analysis_background(job_id: str, file_path: str, context: dict, file
             data["source_image"] = filename
             
             # 2. Update status and save result in DB
-            if SessionLocal:
-                with SessionLocal() as session:
-                    log = session.query(AnalysisLog).filter(AnalysisLog.id == job_id).first()
-                    if log:
-                        log.status = "completed"
-                        log.design_score = data.get("design_score", 0)
-                        log.full_result = data
-                        session.commit()
-                        print(f"DEBUG: Job {job_id}: Saved to DB successfully")
+            save_analysis_log(job_id, "WebUser", filename, "Web Analysis", data)
             
             JOBS[job_id] = {"status": "completed", "data": data}
             print(f"Job {job_id}: Completed successfully.")
@@ -333,12 +362,7 @@ def process_analysis_background(job_id: str, file_path: str, context: dict, file
         except Exception as e:
             logger.error(f"Job {job_id} JSON Parsing Error: {e}")
             JOBS[job_id] = {"status": "failed", "error": f"JSON Parse Error: {e}", "raw": result_json_str}
-            if SessionLocal:
-                with SessionLocal() as session:
-                    log = session.query(AnalysisLog).filter(AnalysisLog.id == job_id).first()
-                    if log:
-                        log.status = "failed"
-                        session.commit()
+            save_analysis_log(job_id, "WebUser", filename, "Web Analysis", {}, status="failed")
             
     except Exception as e:
         logger.error(f"Analysis failed: {e}")
