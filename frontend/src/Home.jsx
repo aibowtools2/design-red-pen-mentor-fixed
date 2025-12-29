@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import './App.css';
 
 // Fix Version: 1.2 (Force Rebuild)
@@ -226,6 +227,11 @@ function Home() {
     return (
       <div className="dashboard">
         <header className="hero">
+          <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', padding: '0 20px' }}>
+            <Link to="/upgrade" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 'bold', border: '1px solid #FFD700', padding: '5px 15px', borderRadius: '20px' }}>
+              👑 Upgrade
+            </Link>
+          </div>
           <h1 className="title">{text.title}</h1>
           <p className="version-label">v2.3</p>
           <p className="subtitle" style={{ whiteSpace: 'pre-line' }}>{text.subtitle}</p>
