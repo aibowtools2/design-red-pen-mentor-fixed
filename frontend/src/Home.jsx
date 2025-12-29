@@ -125,6 +125,9 @@ function Home() {
       if (job.status === "failed") {
         throw new Error(job.error);
       }
+      if (job.status === "not_found") {
+        throw new Error("Server restarted (Job lost). Please try again.");
+      }
     }
     throw new Error("Timeout waiting for result");
   }
