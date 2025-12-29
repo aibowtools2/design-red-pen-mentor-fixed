@@ -296,31 +296,37 @@ JOBS = {}
 def process_analysis_background(job_id: str, file_path: str, context: dict, filename: str):
     """Background Task to run Gemini Analysis and save to DB"""
     try:
-        debug_log(f"START Job {job_id} for {filename}")
+        print(f"DEBUG: Background Task Started for {job_id}")
+        # debug_log(f"START Job {job_id} for {filename}")
         JOBS[job_id] = {"status": "processing"}
         print(f"Job {job_id}: For {filename} started...")
         
         # Test DB connection early
-        debug_log(f"Job {job_id}: Testing DB connection...")
+        # debug_log(f"Job {job_id}: Testing DB connection...")
         if SessionLocal:
              try:
                  # Just a quick check, don't keep session open
                  with SessionLocal() as s:
                      pass
-                 debug_log(f"Job {job_id}: DB Connection OK")
+                 # debug_log(f"Job {job_id}: DB Connection OK")
+                 print(f"DEBUG: Job {job_id}: DB Connection OK")
              except Exception as e:
-                 debug_log(f"Job {job_id}: DB Connection FAILED {e}")
+                 # debug_log(f"Job {job_id}: DB Connection FAILED {e}")
+                 print(f"DEBUG: Job {job_id}: DB Connection FAILED {e}")
         
-        debug_log(f"Job {job_id}: Calling Gemini API...")
+        # debug_log(f"Job {job_id}: Calling Gemini API...")
+        print(f"DEBUG: Job {job_id}: Calling Gemini API...")
         result_json_str = analyze_image_design(file_path, context)
-        debug_log(f"Job {job_id}: Gemini API returned {len(result_json_str)} chars")
+        # debug_log(f"Job {job_id}: Gemini API returned {len(result_json_str)} chars")
+        print(f"DEBUG: Job {job_id}: Gemini API returned {len(result_json_str)} chars")
         
         try:
             data = json.loads(result_json_str)
             data["source_image"] = filename
             
             # DB Storage
-            debug_log(f"Job {job_id}: Saving to DB...")
+            # debug_log(f"Job {job_id}: Saving to DB...")
+            print(f"DEBUG: Job {job_id}: Saving to DB...")
             if SessionLocal:
                 session = SessionLocal()
                 try:
@@ -342,25 +348,30 @@ def process_analysis_background(job_id: str, file_path: str, context: dict, file
                     )
                     session.add(log)
                     session.commit()
-                    debug_log(f"Job {job_id}: Saved to DB successfully")
+                    # debug_log(f"Job {job_id}: Saved to DB successfully")
+                    print(f"DEBUG: Job {job_id}: Saved to DB successfully")
                 except Exception as e:
                     logger.error(f"DB Save Error: {e}")
-                    debug_log(f"Job {job_id}: DB Save Error: {e}")
+                    # debug_log(f"Job {job_id}: DB Save Error: {e}")
+                    print(f"DEBUG: Job {job_id}: DB Save Error: {e}")
                 finally:
                     session.close()
                 
             JOBS[job_id] = {"status": "completed", "data": data}
-            debug_log(f"Job {job_id}: Status set to COMPLETED")
+            # debug_log(f"Job {job_id}: Status set to COMPLETED")
+            print(f"DEBUG: Job {job_id}: Status set to COMPLETED")
             print(f"Job {job_id}: Completed successfully.")
             
         except Exception as e:
             logger.error(f"Job {job_id} JSON Parsing Error: {e}")
-            debug_log(f"Job {job_id} JSON Parsing Error: {e}")
+            # debug_log(f"Job {job_id} JSON Parsing Error: {e}")
+            print(f"DEBUG: Job {job_id} JSON Parsing Error: {e}")
             JOBS[job_id] = {"status": "failed", "error": f"JSON Parse Error: {e}", "raw": result_json_str}
             
     except Exception as e:
-        logger.error(f"Job {job_id} Formatting Error: {e}")
-        debug_log(f"Job {job_id} Fatal Error: {e}")
+        logger.error(f"Analysis failed: {e}")
+        print(f"DEBUG: Background Task Failed: {e}")
+        # debug_log(f"Job {job_id} Fatal Error: {e}")
         JOBS[job_id] = {"status": "failed", "error": str(e)}
 
 @app.get("/status/{job_id}")
@@ -417,13 +428,9 @@ def analyze_image(
     target: str = Form(""),
     purpose: str = Form("")
 ):
-    upload_dir = "../watched_videos"
-    if not os.path.exists(upload_dir):
-        os.makedirs(upload_dir)
-        
     # Create a unique filename to avoid collisions (especially for Test Mode's sample_test.png)
     unique_filename = f"{uuid.uuid4()}_{file.filename}"
-    file_path = os.path.join(upload_dir, unique_filename)
+    file_path = os.path.join(UPLOAD_DIR, unique_filename)
     
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
@@ -433,6 +440,8 @@ def analyze_image(
     
     # Store initial status
     JOBS[job_id] = {"status": "pending"}
+    
+    context = {"type": type, "target": target, "purpose": purpose}
     
     # Start Background Task
     background_tasks.add_task(process_analysis_background, job_id, file_path, context, file.filename)
