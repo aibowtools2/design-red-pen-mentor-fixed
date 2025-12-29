@@ -18,7 +18,7 @@ if API_KEY:
 # "gemini-1.5-pro-latest" is the stable multimodal workhorse.
 # "gemini-exp-1206" (Gemini 2.0 Flash) is faster if available.
 # ... existing code ...
-IMAGE_MODEL_NAME = "gemini-2.5-pro"
+IMAGE_MODEL_NAME = "gemini-1.5-pro"
 
 def analyze_image_design(image_path, context=None):
     """
