@@ -95,24 +95,31 @@ def read_root():
 
 def is_premium(user_id: str) -> bool:
     """Check if user is premium using DB"""
-    if not db.SessionLocal: return False
+    if not db.SessionLocal: 
+        logger.warning("DB: SessionLocal is None in is_premium")
+        return False
     
     clean_uid = user_id.strip()
     session = db.SessionLocal()
     try:
         user = session.query(db.User).filter(db.User.user_id == clean_uid).first()
         if not user:
+            logger.info(f"DB: User {clean_uid} not found in DB")
             return False
             
+        logger.info(f"DB: Checking User {clean_uid} -> is_premium={user.is_premium}, expiry={user.premium_expiry}, plan={user.plan_type}")
+        
         # If is_premium is False, definitely not premium
         if not user.is_premium:
             return False
             
         # If it is premium, check if it has expired
         if user.premium_expiry and user.premium_expiry < datetime.datetime.utcnow():
+            logger.info(f"DB: User {clean_uid} premium EXPIRED")
             return False
             
-        # Otherwise, user IS premium (treat Null expiry as permanent/unexpired)
+        # Otherwise, user IS premium
+        logger.info(f"DB: User {clean_uid} premium VALIDATED")
         return True
     except Exception as e:
         logger.error(f"DB Error checking premium for {clean_uid}: {e}")
