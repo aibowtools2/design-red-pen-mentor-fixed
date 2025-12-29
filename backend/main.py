@@ -230,7 +230,25 @@ def handle_event_background(event):
             logger.info(f"LINE EVENT: Received event from user_id: {user_id}")
             
             if isinstance(event.message, TextMessage):
-                 line_bot_api.reply_message(
+                text = event.message.text
+                
+                if text == "使い方を見る":
+                    reply_text = "【使い方ガイド】\n1. 添削したい画像を送信してください。\n2. AIがデザインを分析し、スコアとアドバイスを返信します。\n3. Web版ではさらに詳細なレポートを確認できます！"
+                    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
+                    return
+                elif text == "分析履歴を確認":
+                    history_url = f"https://design-sensei.aibowtools.com/history?uid={user_id}"
+                    reply_text = f"これまでの分析履歴はこちらから確認できます！\n{history_url}"
+                    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
+                    return
+                elif text == "無制限プランに参加":
+                    upgrade_url = f"https://design-sensei.aibowtools.com/upgrade?uid={user_id}"
+                    reply_text = f"🚀 無制限プラン（月額350円）に参加すると、1日の回数制限がなくなり、より詳細なデザイン分析が可能になります！\n\nお申し込みはこちら：\n{upgrade_url}"
+                    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
+                    return
+                
+                # Default reply for other texts
+                line_bot_api.reply_message(
                     event.reply_token,
                     TextSendMessage(text="画像を送信すると、デザイン赤ペン先生が添削します！")
                 )
