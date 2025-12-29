@@ -56,10 +56,9 @@ const Upgrade = () => {
                 </ul>
 
                 <div style={{ textAlign: 'center' }}>
-                    {/* Placeholder for Stripe Link */}
+                    {/* Stripe Payment Link */}
                     <a
-                        href="#"
-                        onClick={(e) => { e.preventDefault(); alert("Payment link coming soon! please wait."); }}
+                        href="https://buy.stripe.com/fZu14macr0CH7Kh8KKaAw02"
                         className="submit-btn"
                         style={{
                             display: 'inline-block',
