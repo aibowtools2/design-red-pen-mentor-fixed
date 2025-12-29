@@ -111,7 +111,7 @@ function Home() {
     });
 
     try {
-      const res = await fetch('/sample_test.png');
+      const res = await fetch('/sample_test_new.png');
       const blob = await res.blob();
       const demoFile = new File([blob], "sample_test.png", { type: "image/png" });
 
@@ -126,7 +126,14 @@ function Home() {
 
   // Improved Polling Logic with Loop
   const performAnalysis = async (formData) => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    let apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+    // Safety check for production: if we are on the production domain but apiUrl is localhost, 
+    // it means environment variables aren't set correctly in Vercel. 
+    // Fallback to the known production Render URL.
+    if (window.location.hostname !== 'localhost' && apiUrl.includes('localhost')) {
+      apiUrl = 'https://design-red-pen-mentor.onrender.com';
+    }
 
     // Submit
     const res = await fetch(`${apiUrl}/analyze`, { method: 'POST', body: formData });
