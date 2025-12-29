@@ -62,6 +62,10 @@ if frontend_url.endswith("/"):
     origins.append(frontend_url[:-1])
 else:
     origins.append(frontend_url + "/")
+    
+# Explicitly add production domains (just to be safe)
+origins.append("https://design-sensei.aibowtools.com")
+origins.append("https://design-red-pen-mentor.onrender.com")
 
 app.add_middleware(
     CORSMiddleware,
@@ -73,7 +77,8 @@ app.add_middleware(
 )
 
 # Ensure upload directory exists for production
-UPLOAD_DIR = "../watched_videos"
+# Ensure upload directory exists for production
+UPLOAD_DIR = "uploads"
 if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
 
