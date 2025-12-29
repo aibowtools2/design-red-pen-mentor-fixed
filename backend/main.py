@@ -15,6 +15,8 @@ import logging
 from gemini_client import analyze_image_design
 
 # Database Imports
+
+# Force Reload Triggered
 from db import init_db, get_db, User, AnalysisLog, SessionLocal
 from sqlalchemy.orm import Session
 
@@ -79,16 +81,7 @@ app.mount("/files", StaticFiles(directory="."), name="files")
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # Fallback to serve index.html for SPA
-@app.get("/{full_path:path}", include_in_schema=False)
-async def catch_all(full_path: str):
-    if full_path.startswith("api") or full_path.startswith("webhook") or full_path.startswith("callback") or full_path.startswith("stripe_webhook"):
-        raise HTTPException(status_code=404, detail="Not Found")
-    
-    possible_index = os.path.join(".", "frontend", "dist", "index.html")
-    if os.path.exists("index.html"): 
-        from fastapi.responses import FileResponse
-        return FileResponse("index.html")
-    return {"message": "API is running. Frontend static files not found."}
+
 
 @app.get("/")
 def read_root():
@@ -289,21 +282,39 @@ async def stripe_webhook(request: Request):
     return {"status": "success"}
 
 # --- Async Analysis Job Store & Background Task ---
+    with open("debug.log", "a", encoding="utf-8") as f:
+        f.write(f"{datetime.datetime.now()}: {msg}\n")
+
 JOBS = {}
 
 def process_analysis_background(job_id: str, file_path: str, context: dict, filename: str):
     """Background Task to run Gemini Analysis and save to DB"""
     try:
+        debug_log(f"START Job {job_id} for {filename}")
         JOBS[job_id] = {"status": "processing"}
         print(f"Job {job_id}: For {filename} started...")
         
+        # Test DB connection early
+        debug_log(f"Job {job_id}: Testing DB connection...")
+        if SessionLocal:
+             try:
+                 # Just a quick check, don't keep session open
+                 with SessionLocal() as s:
+                     pass
+                 debug_log(f"Job {job_id}: DB Connection OK")
+             except Exception as e:
+                 debug_log(f"Job {job_id}: DB Connection FAILED {e}")
+        
+        debug_log(f"Job {job_id}: Calling Gemini API...")
         result_json_str = analyze_image_design(file_path, context)
+        debug_log(f"Job {job_id}: Gemini API returned {len(result_json_str)} chars")
         
         try:
             data = json.loads(result_json_str)
             data["source_image"] = filename
             
             # DB Storage
+            debug_log(f"Job {job_id}: Saving to DB...")
             if SessionLocal:
                 session = SessionLocal()
                 try:
@@ -325,20 +336,25 @@ def process_analysis_background(job_id: str, file_path: str, context: dict, file
                     )
                     session.add(log)
                     session.commit()
+                    debug_log(f"Job {job_id}: Saved to DB successfully")
                 except Exception as e:
                     logger.error(f"DB Save Error: {e}")
+                    debug_log(f"Job {job_id}: DB Save Error: {e}")
                 finally:
                     session.close()
                 
             JOBS[job_id] = {"status": "completed", "data": data}
+            debug_log(f"Job {job_id}: Status set to COMPLETED")
             print(f"Job {job_id}: Completed successfully.")
             
         except Exception as e:
             logger.error(f"Job {job_id} JSON Parsing Error: {e}")
+            debug_log(f"Job {job_id} JSON Parsing Error: {e}")
             JOBS[job_id] = {"status": "failed", "error": f"JSON Parse Error: {e}", "raw": result_json_str}
             
     except Exception as e:
         logger.error(f"Job {job_id} Formatting Error: {e}")
+        debug_log(f"Job {job_id} Fatal Error: {e}")
         JOBS[job_id] = {"status": "failed", "error": str(e)}
 
 @app.get("/status/{job_id}")
@@ -388,7 +404,7 @@ def get_history_item(analysis_id: str):
         session.close()
 
 @app.post("/analyze")
-async def analyze_image(
+def analyze_image(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     type: str = Form(""),
@@ -406,6 +422,21 @@ async def analyze_image(
     job_id = str(uuid.uuid4())
     context = {"type": type, "target": target, "purpose": purpose}
     
+    # Register job immediately to avoid "not found" race condition
+    JOBS[job_id] = {"status": "pending"}
+    
     background_tasks.add_task(process_analysis_background, job_id, file_path, context, file.filename)
     
     return {"status": "accepted", "job_id": job_id}
+
+# Fallback to serve index.html for SPA (Must be last)
+@app.get("/{full_path:path}", include_in_schema=False)
+async def catch_all(full_path: str):
+    if full_path.startswith("api") or full_path.startswith("webhook") or full_path.startswith("callback") or full_path.startswith("stripe_webhook"):
+        raise HTTPException(status_code=404, detail="Not Found")
+    
+    possible_index = os.path.join(".", "frontend", "dist", "index.html")
+    if os.path.exists("index.html"): 
+        from fastapi.responses import FileResponse
+        return FileResponse("index.html")
+    return {"message": "API is running. Frontend static files not found."}
