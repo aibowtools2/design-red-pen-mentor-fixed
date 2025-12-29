@@ -444,7 +444,7 @@ def analyze_image(
     context = {"type": type, "target": target, "purpose": purpose}
     
     # Start Background Task
-    background_tasks.add_task(process_analysis_background, job_id, file_path, context, file.filename)
+    background_tasks.add_task(process_analysis_background, job_id, file_path, context, unique_filename)
     
     return {"status": "accepted", "job_id": job_id}
 

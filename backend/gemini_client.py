@@ -18,7 +18,7 @@ if API_KEY:
 # "gemini-1.5-pro-latest" is the stable multimodal workhorse.
 # "gemini-exp-1206" (Gemini 2.0 Flash) is faster if available.
 # ... existing code ...
-IMAGE_MODEL_NAME = "gemini-2.5-flash-lite"
+IMAGE_MODEL_NAME = "gemini-3-flash-preview"
 
 def analyze_image_design(image_path, context=None):
     """
@@ -65,38 +65,40 @@ def analyze_image_design(image_path, context=None):
     """
 
     prompt = f"""
-    You are a world-class Art Director and Design Mentor. The user has uploaded a creative visual.
+    You are a world-class Art Director and Design Mentor (Design Sensei). 
+    The user has uploaded a creative visual.
     {context_str}
     
-    Your task is to provide a "Tensaku" (Correction) report to improve this design.
-    You MUST provide specific, quantitative, and actionable advice.
-    You MUST leverage Google's design data (Fonts, Material Design) to back up your claims.
-
+    Your goal is to provide a "Tensaku" (Correction) report that is **extremely actionable, specific, and data-driven**.
+    Avoid vague feedback like "make it better". instead say "increase font size by 20%".
+    
+    You MUST leverage Google's design data (Fonts, Material Design, Color Theory) to back up your claims.
+    
     Output a JSON object with the following structure:
     {{
         "status": "success",
         "design_score": 85,
         "detailed_metrics": {{
-            "color_palette": {{"score": 8, "comment": "Good harmony but low contrast."}},
-            "composition": {{"score": 7, "comment": "Rule of thirds is weak."}},
-            "typography": {{"score": 9, "comment": "Excellent font choice."}},
-            "contrast": {{"score": 6, "comment": "Needs more punch."}},
-            "balance": {{"score": 8, "comment": "Well balanced."}},
-            "hierarchy": {{"score": 7, "comment": "Eye flow is clear."}},
-            "clarity": {{"score": 9, "comment": "Easy to read."}},
-            "originality": {{"score": 5, "comment": "A bit generic."}},
-            "relevance": {{"score": 9, "comment": "Fits the target well."}},
-            "impact": {{"score": 7, "comment": "Memorable."}}
+            "color_palette": {{"score": 8, "comment": "Base color is solid, but accent color contrast ratio is only 3.5:1. Aim for 4.5:1."}},
+            "composition": {{"score": 7, "comment": "Main subject is centered. Try shifting to the left third line (Rule of Thirds) for dynamic tension."}},
+            "typography": {{"score": 9, "comment": "Font choice is professional. Line-height is a bit tight; increase from 1.2 to 1.5."}},
+            "contrast": {{"score": 6, "comment": "Text on background is hard to read. Darken the background overlay opacity by 20%."}},
+            "balance": {{"score": 8, "comment": "Visual weight is well distributed."}},
+            "hierarchy": {{"score": 7, "comment": "The Headline competes with the CTA. Reduce CTA size by 10% or bold the Headline."}},
+            "clarity": {{"score": 9, "comment": "Message is instantly understood."}},
+            "originality": {{"score": 5, "comment": "Layout is standard. Try breaking the grid or using a non-standard crop."}},
+            "relevance": {{"score": 9, "comment": "Perfectly matches the target audience."}},
+            "impact": {{"score": 7, "comment": "Good first impression, but lacks a 'hook' element."}}
         }},
         "good_points": [
-            "Your use of whitespace around the logo is excellent.",
-            "The color palette (#FF5500) effectively conveys energy."
+            "Your use of whitespace around the logo (approx 40px) is professional.",
+            "The color palette (#FF5500) effectively conveys energy and aligns with the purpose."
         ],
         "google_data_insights": {{
             "google_fonts_recommendation": {{
                 "current_mood": "Friendly and Round",
                 "suggested_font_name": "Zen Maru Gothic",
-                "reason": "Your current font feels too rigid. 'Zen Maru Gothic' from Google Fonts would align 30% better with your friendly imagery."
+                "reason": "Your current font feels 20% too rigid. 'Zen Maru Gothic' (Google Fonts) would align better with the friendly imagery."
             }},
             "material_design_check": {{
                 "metric": "Touch Target Size / Spacing",
@@ -112,17 +114,24 @@ def analyze_image_design(image_path, context=None):
                 "suggestion": "Increase the headline font size by 150% (approx 2.5x current size).",
                 "quantitative_value": "150%",
                 "naruhodo_principle": "Importance Scale (Daiji-do Tenbin)"
+            }},
+            {{
+                 "priority": "Medium",
+                 "issue": "Margins are inconsistent.",
+                 "suggestion": "Align all left-side text elements to a strict 48px grid line.",
+                 "quantitative_value": "48px",
+                 "naruhodo_principle": "Alignment (Soroe)"
             }}
         ],
         "overall_comment": "A brief, encouraging summary in Japanese."
     }}
     
     Ensure "detailed_metrics" contains exactly these 10 keys: 
-    color_palette (配色), composition (構図), typography (文字), contrast (対比), balance (バランス),
-    hierarchy (優先順位), clarity (情報伝達), originality (独創性), relevance (目的適合), impact (第一印象).
-    All scores 1-10. Comments in Japanese.
+    color_palette, composition, typography, contrast, balance, hierarchy, clarity, originality, relevance, impact.
+    All scores 1-10. 
     
-    Ensure ALL text values (comments, suggestions) are in **Japanese**.
+    **CRITICAL**: All values (comments, suggestions, reason) MUST be in **Japanese**.
+    Be specific. Use numbers (px, %, ratio).
     """
     
     model = genai.GenerativeModel(model_name=IMAGE_MODEL_NAME)
