@@ -215,6 +215,7 @@ def handle_event_background(event):
     try:
         if isinstance(event, MessageEvent):
             user_id = event.source.user_id
+            logger.info(f"LINE EVENT: Received event from user_id: {user_id}")
             
             if isinstance(event.message, TextMessage):
                  line_bot_api.reply_message(
