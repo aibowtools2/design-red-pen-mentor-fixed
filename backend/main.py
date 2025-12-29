@@ -11,6 +11,7 @@ import stripe
 from typing import List
 from dotenv import load_dotenv
 import logging
+import tempfile
 
 from gemini_client import analyze_image_design
 
@@ -77,8 +78,8 @@ app.add_middleware(
 )
 
 # Ensure upload directory exists for production
-# Ensure upload directory exists for production
-UPLOAD_DIR = "uploads"
+# Ensure upload directory exists (Use tempdir for Render Read-Only FS compatibility)
+UPLOAD_DIR = os.path.join(tempfile.gettempdir(), "design_uploads")
 if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
 
