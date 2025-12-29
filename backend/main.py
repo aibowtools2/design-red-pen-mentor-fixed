@@ -325,11 +325,76 @@ async def stripe_webhook(request: Request):
         
     return {"status": "success"}
 
-# --- Other Endpoints (History, Analysis) ---
-# ... (Continuing with existing History and Analysis endpoints) ...
-# I will copy the rest of the file content here to ensure nothing is lost.
+# --- Async Analysis Job Store ---
+# In-memory store for simplicity (Production should use Redis/DB)
+JOBS = {}
 
-HISTORY_FILE = "history_log.json"
+def process_analysis_background(job_id: str, file_path: str, context: dict, filename: str):
+    """
+    Background Task to run Gemini Analysis
+    """
+    try:
+        JOBS[job_id] = {"status": "processing"}
+        print(f"Job {job_id}: For {filename} started...")
+        
+        result_json_str = analyze_image_design(file_path, context)
+        
+        try:
+            data = json.loads(result_json_str)
+            data["source_image"] = filename
+            
+            # History Logic
+            analysis_id = str(uuid.uuid4())
+            timestamp = int(time.time())
+            data["id"] = analysis_id
+            data["timestamp"] = timestamp
+            
+            # Save History Data File
+            history_filename = f"history_data_{analysis_id}.json"
+            with open(history_filename, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+
+            # Update History Index
+            history_entry = {
+                "id": analysis_id,
+                "timestamp": timestamp,
+                "type": context.get("type", "Unknown"),
+                "image": filename,
+                "score": data.get("design_score", 0)
+            }
+            
+            current_history = []
+            if os.path.exists(HISTORY_FILE):
+                with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+                    try: current_history = json.load(f)
+                    except: pass
+            
+            current_history.insert(0, history_entry)
+            
+            with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+                json.dump(current_history, f, ensure_ascii=False, indent=2)
+                
+            with open("data.json", "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+                
+            JOBS[job_id] = {"status": "completed", "data": data}
+            print(f"Job {job_id}: Completed successfully.")
+            
+        except Exception as e:
+            logger.error(f"Job {job_id} JSON Parsing Error: {e}")
+            JOBS[job_id] = {"status": "failed", "error": f"JSON Parse Error: {e}", "raw": result_json_str}
+            
+    except Exception as e:
+        logger.error(f"Job {job_id} Formatting Error: {e}")
+        JOBS[job_id] = {"status": "failed", "error": str(e)}
+
+@app.get("/status/{job_id}")
+def get_job_status(job_id: str):
+    job = JOBS.get(job_id)
+    if not job:
+        return {"status": "not_found"}
+    return job
+
 
 @app.get("/history")
 def get_history():
@@ -357,12 +422,17 @@ def get_analysis():
     return {"status": "waiting", "message": "No analysis yet."}
 
 @app.post("/analyze")
-def analyze_image(
+async def analyze_image(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     type: str = Form(""),
     target: str = Form(""),
     purpose: str = Form("")
 ):
+    """
+    Submits an analysis job. Returns a Job ID immediately.
+    Client should poll /status/{job_id} for results.
+    """
     upload_dir = "../watched_videos"
     if not os.path.exists(upload_dir):
         os.makedirs(upload_dir)
@@ -371,46 +441,11 @@ def analyze_image(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
         
-    # Analyze
+    job_id = str(uuid.uuid4())
     context = {"type": type, "target": target, "purpose": purpose}
-    result_json_str = analyze_image_design(file_path, context)
     
-    try:
-        data = json.loads(result_json_str)
-        data["source_image"] = file.filename
-        
-        # History
-        analysis_id = str(uuid.uuid4())
-        timestamp = int(time.time())
-        data["id"] = analysis_id
-        data["timestamp"] = timestamp
-        
-        history_filename = f"history_data_{analysis_id}.json"
-        with open(history_filename, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+    # Start Background Task
+    background_tasks.add_task(process_analysis_background, job_id, file_path, context, file.filename)
+    
+    return {"status": "accepted", "job_id": job_id}
 
-        history_entry = {
-            "id": analysis_id,
-            "timestamp": timestamp,
-            "type": context.get("type", "Unknown"),
-            "image": file.filename,
-            "score": data.get("design_score", 0)
-        }
-        
-        current_history = []
-        if os.path.exists(HISTORY_FILE):
-            with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-                try: current_history = json.load(f)
-                except: pass
-        
-        current_history.insert(0, history_entry)
-        
-        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-            json.dump(current_history, f, ensure_ascii=False, indent=2)
-            
-        with open("data.json", "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-            
-        return data
-    except Exception as e:
-        return {"error": str(e), "raw_response": result_json_str}
