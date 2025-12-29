@@ -117,9 +117,9 @@ function Home() {
 
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-    // Timeout Promise (90 seconds - Render Free Tier needs time)
+    // Timeout Promise (180 seconds - Render Free Tier needs time)
     const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Request timed out (Server waking up...)")), 90000)
+      setTimeout(() => reject(new Error("Request timed out (Server waking up...)")), 180000)
     );
 
     try {
