@@ -234,7 +234,7 @@ def signup(user: UserCreate):
         )
         session.add(new_user)
         session.commit()
-        return {"status": "success", "message": "User created"}
+        return {"status": "success", "message": "User created", "user_id": new_user.user_id}
     finally:
         session.close()
 

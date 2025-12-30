@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import './App.css';
 
-import API_URL from './config';
+import API_URL, { STRIPE_PAYMENT_LINK } from './config';
 
 function Signup() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [isPremium, setIsPremium] = useState(true); // Default to Premium
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -35,7 +36,16 @@ function Signup() {
 
             if (response.ok) {
                 setSuccess(true);
-                setTimeout(() => navigate('/login'), 2000);
+
+                if (isPremium && data.user_id) {
+                    // Redirect to Stripe
+                    setTimeout(() => {
+                        window.location.href = `${STRIPE_PAYMENT_LINK}?client_reference_id=${data.user_id}`;
+                    }, 1500);
+                } else {
+                    // Normal redirect
+                    setTimeout(() => navigate('/login'), 2000);
+                }
             } else {
                 setError(data.detail || '登録に失敗しました');
             }
@@ -53,7 +63,11 @@ function Signup() {
                 <p className="subtitle" style={{ marginBottom: '30px' }}>デザイン赤ペン先生へようこそ</p>
 
                 {error && <div className="error-badge">{error}</div>}
-                {success && <div className="success-badge">登録が完了しました！ログイン画面へ移動します...</div>}
+                {success && (
+                    <div className="success-badge">
+                        {isPremium ? 'アカウントを作成しました！決済画面へ移動します...' : '登録が完了しました！ログイン画面へ移動します...'}
+                    </div>
+                )}
 
                 <form onSubmit={handleSignup}>
                     <div className="input-group">
@@ -90,8 +104,27 @@ function Signup() {
                         />
                     </div>
 
-                    <button type="submit" className="primary-btn" disabled={loading} style={{ marginTop: '20px' }}>
-                        {loading ? '登録中...' : 'アカウント作成'}
+                    <div className="plan-selection" style={{ marginTop: '20px', padding: '15px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px' }}>
+                            <input
+                                type="checkbox"
+                                checked={isPremium}
+                                onChange={(e) => setIsPremium(e.target.checked)}
+                                style={{ transform: 'scale(1.2)' }}
+                            />
+                            <div style={{ textAlign: 'left' }}>
+                                <div style={{ fontWeight: 'bold', fontSize: '1rem', color: isPremium ? '#00f2fe' : 'inherit' }}>
+                                    Standard Plan (月額 ¥500)
+                                </div>
+                                <div style={{ fontSize: '0.8rem', color: '#aaa' }}>
+                                    無制限AI分析・詳細レポート
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <button type="submit" className="primary-btn" disabled={loading} style={{ marginTop: '20px', width: '100%' }}>
+                        {loading ? '処理中...' : (isPremium ? '登録して決済へ進む' : 'アカウント作成')}
                     </button>
                 </form>
 
