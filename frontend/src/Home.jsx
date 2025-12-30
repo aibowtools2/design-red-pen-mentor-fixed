@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import './App.css';
 
 // Fix Version: 1.2 (Force Rebuild)
@@ -70,6 +70,7 @@ const getAuthHeaders = () => {
 };
 
 function Home() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [data, setData] = useState(null);
   const [history, setHistory] = useState([]);
@@ -91,7 +92,8 @@ function Home() {
   };
 
   // Check valid JSON helper
-  const parsAnalysis = (inputData) => {
+  const parseAnalysis = (inputData) => {
+    if (!inputData) return null;
     if (typeof inputData === "string") {
       try {
         const CleanString = inputData.replace(/```json/g, '').replace(/```/g, '');
@@ -201,7 +203,7 @@ function Home() {
 
     try {
       const result = await performAnalysis(formData);
-      setData(parsAnalysis(result));
+      setData(parseAnalysis(result));
     } catch (err) {
       console.error(err);
       alert(`Analysis failed: ${err.message}. Please try again.`);
