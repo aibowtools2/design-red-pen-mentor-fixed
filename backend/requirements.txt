@@ -10,5 +10,6 @@ psycopg2-binary
 sqlalchemy
 supabase
 pyjwt
+bcrypt
 passlib[bcrypt]
 pydantic[email]

@@ -455,35 +455,6 @@ async def callback(request: Request, background_tasks: BackgroundTasks, x_line_s
         background_tasks.add_task(handle_event_background, event)
     return "OK"
 
-# --- Stripe Webhook ---
-@app.post("/stripe-webhook")
-@app.post("/stripe_webhook")
-async def stripe_webhook(request: Request):
-    payload = await request.body()
-    sig_header = request.headers.get('stripe-signature')
-    
-    try:
-        if STRIPE_WEBHOOK_SECRET:
-            event = stripe.Webhook.construct_event(payload, sig_header, STRIPE_WEBHOOK_SECRET)
-        else:
-            data = json.loads(payload)
-            event = stripe.Event.construct_from(data, stripe.api_key)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail="Invalid payload")
-    except stripe.error.SignatureVerificationError as e:
-        raise HTTPException(status_code=400, detail="Invalid signature")
-        
-    if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
-        client_reference_id = session.get('client_reference_id')
-        if client_reference_id:
-            logger.info(f"Payment successful for user: {client_reference_id}")
-            update_premium_status(client_reference_id, "monthly") # Uses DB
-        else:
-            logger.warning("Payment received but no client_reference_id found.")
-            
-    return {"status": "success"}
-
 # --- Async Analysis Job Store & Background Task ---
     with open("debug.log", "a", encoding="utf-8") as f:
         f.write(f"{datetime.datetime.now()}: {msg}\n")
