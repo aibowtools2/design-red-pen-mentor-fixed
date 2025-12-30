@@ -81,10 +81,7 @@ function Login() {
                     <p>アカウントをお持ちでないですか？</p>
                     <Link to="/signup" className="text-link">新規登録はこちら</Link>
 
-                    <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                        <p style={{ fontSize: '0.8rem', marginBottom: '10px', opacity: 0.7 }}>まずは添削結果のサンプルを見たい方はこちら</p>
-                        <Link to="/demo" className="text-link" style={{ color: 'var(--accent-green)', fontWeight: 'bold' }}>📋 添削サンプルを見る</Link>
-                    </div>
+
                 </div>
             </div>
         </div>
