@@ -659,6 +659,10 @@ body {
   font-size: clamp(2rem, 5vw, 3.5rem);
   line-height: 1.2;
   margin-bottom: 20px;
+  /* Prevent weird breaks */
+  text-wrap: balance;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .hero-subtitle {
@@ -668,6 +672,14 @@ body {
   margin: 0 0 30px;
   line-height: 1.7;
   text-align: left;
+  /* Prevent weird breaks */
+  word-break: auto-phrase;
+  /* Modern browsers */
+  overflow-wrap: anywhere;
+}
+
+.no-break {
+  display: inline-block;
 }
 
 .marker-highlight {
@@ -711,7 +723,15 @@ body {
   color: var(--text-muted);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
+  .desktop-only {
+    display: none;
+  }
+
+  .mobile-only {
+    display: flex;
+  }
+
   .hero-container {
     flex-direction: column;
     text-align: center;
@@ -736,6 +756,25 @@ body {
     display: none;
     /* Hide 3D image on mobile if it takes too much space, or adjust */
     width: 100%;
+  }
+
+  /* Nav Links spacing fix */
+  .lp-nav {
+    padding: 15px 20px;
+    flex-wrap: nowrap;
+  }
+
+  .logo {
+    font-size: 1.1rem;
+    z-index: 200;
+  }
+
+  .demo-report-box {
+    padding: 15px !important;
+  }
+
+  .image-preview {
+    min-height: 150px;
   }
 }
 
@@ -807,7 +846,7 @@ body {
   border-color: white;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .pricing-grid {
     grid-template-columns: 1fr;
     gap: 50px;
@@ -907,47 +946,6 @@ body {
   color: var(--text-muted);
   opacity: 0.5;
   margin: 0;
-}
-
-@media (max-width: 768px) {
-  .desktop-only {
-    display: none;
-  }
-
-  .mobile-only {
-    display: flex;
-  }
-
-  .hero-title {
-    font-size: 2rem;
-    /* Adjusted for mobile readability */
-    line-height: 1.3;
-  }
-
-  .hero-subtitle {
-    font-size: 1rem;
-    padding: 0 15px;
-  }
-
-  .lp-nav {
-    padding: 15px 20px;
-    flex-wrap: nowrap;
-    /* Prevent wrapping which broke layout */
-  }
-
-  .logo {
-    font-size: 1.1rem;
-    z-index: 200;
-    /* Ensure logo stays above menu overlay if needed */
-  }
-
-  .demo-report-box {
-    padding: 15px !important;
-  }
-
-  .image-preview {
-    min-height: 150px;
-  }
 }
 
 .text-link {

@@ -107,7 +107,7 @@ const Landing = () => {
                     <div className="hero-content-left">
                         <h1 className="hero-title">あなたのデザインを、<br /><span className="highlight">3秒でスコアリング</span>。</h1>
                         <p className="hero-subtitle">
-                            Googleの膨大な学習データを元に、AIがあなたの作品を客観的に評価。<br />
+                            Googleの膨大な学習データを元に、AIがあなたの作品を<span className="no-break">客観的に評価。</span><br />
                             改善点を具体的に<span className="marker-highlight">「赤ペン」</span>で言語化します。
                         </p>
                         <div className="hero-actions">
