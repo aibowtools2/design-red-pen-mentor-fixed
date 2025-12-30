@@ -285,16 +285,28 @@ def check_and_update_usage(user_id: str) -> bool:
         
         if not user:
             # New user, create record
-            user = db.User(user_id=user_id, last_free_usage_date=today_str)
+            user = db.User(
+                user_id=user_id, 
+                last_free_usage_date=today_str,
+                daily_usage_count=1 # First usage
+            )
             session.add(user)
             session.commit()
             return True
             
-        if user.last_free_usage_date == today_str:
-            return False # Already used today
+        if user.last_free_usage_date != today_str:
+            # New day, reset
+            user.last_free_usage_date = today_str
+            user.daily_usage_count = 1
+            session.commit()
+            return True
+
+        # Same day, check limit
+        if user.daily_usage_count >= 3:
+            return False # Limit reached
             
         # Update usage
-        user.last_free_usage_date = today_str
+        user.daily_usage_count += 1
         session.commit()
         return True
     except Exception as e:
@@ -502,6 +514,34 @@ def get_job_status(job_id: str):
                 return {"status": log.status}
     
     return {"status": "not_found"}
+
+@app.get("/user/status")
+def get_user_status(request: Request):
+    user_id = get_current_user_id(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Not logged in")
+        
+    session = db.SessionLocal()
+    try:
+        user = session.query(db.User).filter(db.User.user_id == user_id).first()
+        if not user:
+            return {"plan": "free", "usage": 0, "limit": 3}
+            
+        is_prem = is_premium(user_id)
+        
+        # Reset visual usage if new day (for display consistency)
+        today_str = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+        usage = user.daily_usage_count
+        if user.last_free_usage_date != today_str:
+            usage = 0
+            
+        return {
+            "plan": "premium" if is_prem else "free",
+            "usage": usage,
+            "limit": "unlimited" if is_prem else 3
+        }
+    finally:
+        session.close()
 
 @app.get("/history")
 def get_history(uid: Optional[str] = None):

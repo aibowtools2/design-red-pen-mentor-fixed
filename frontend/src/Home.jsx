@@ -337,23 +337,53 @@ function Home() {
   }
 
   // 2. Input Form (If no data yet)
+  const [userStatus, setUserStatus] = useState(null);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const apiUrl = getEffectiveApiUrl();
+        const res = await fetch(`${apiUrl}/user/status`, { headers: getAuthHeaders() });
+        if (res.ok) setUserStatus(await res.json());
+      } catch (e) { console.error(e); }
+    };
+    fetchStatus();
+  }, []); // Run on mount
+
   if (!data) {
+    const isPremium = userStatus?.plan === 'premium';
+    const usageStr = isPremium ? '無制限' : `${userStatus?.usage || 0} / ${userStatus?.limit || 3}`;
+
     return (
       <div className="dashboard">
         <header className="hero">
-          <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', padding: '0 20px', gap: '10px' }}>
-            <button onClick={handleLogout} className="text-link" style={{ fontSize: '0.9rem', color: '#ff5858' }}>
-              🚪 Logout
-            </button>
-            <button onClick={fillDemoData} style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', padding: '5px 15px', borderRadius: '20px', cursor: 'pointer' }}>
-              🧪 Test Mode
-            </button>
-            <Link to="/upgrade" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 'bold', border: '1px solid #FFD700', padding: '5px 15px', borderRadius: '20px' }}>
-              👑 Upgrade
-            </Link>
+          <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '0 20px', alignItems: 'center' }}>
+            {/* Plan Status Badge */}
+            <div style={{
+              background: isPremium ? 'linear-gradient(45deg, #FFD700, #FDB931)' : 'rgba(255,255,255,0.1)',
+              color: isPremium ? '#000' : '#fff',
+              padding: '8px 16px',
+              borderRadius: '20px',
+              fontWeight: 'bold',
+              fontSize: '0.9rem',
+              border: isPremium ? 'none' : '1px solid rgba(255,255,255,0.2)'
+            }}>
+              {isPremium ? '👑 Premium Plan (Unlimited)' : `Free Plan: ${usageStr} Used`}
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={handleLogout} className="text-link" style={{ fontSize: '0.9rem', color: '#ff5858' }}>
+                🚪 Logout
+              </button>
+              {!isPremium && (
+                <Link to="/upgrade" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 'bold', border: '1px solid #FFD700', padding: '5px 15px', borderRadius: '20px' }}>
+                  🚀 Upgrade
+                </Link>
+              )}
+            </div>
           </div>
           <h1 className="title">{text.title}</h1>
-          <p className="version-label">v2.3</p>
+          <p className="version-label">v3.0</p>
           <p className="subtitle" style={{ whiteSpace: 'pre-line' }}>{text.subtitle}</p>
         </header>
 

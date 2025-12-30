@@ -31,6 +31,7 @@ class User(Base):
     plan_type = Column(String, default="free")
     
     last_free_usage_date = Column(String) # For daily limit check (YYYY-MM-DD)
+    daily_usage_count = Column(Integer, default=0) # Counter for daily usage
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
