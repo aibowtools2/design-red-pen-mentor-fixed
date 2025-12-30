@@ -85,6 +85,41 @@ function Home() {
     purpose: ''
   });
 
+  const [currentTip, setCurrentTip] = useState(0);
+  const [userStatus, setUserStatus] = useState(null);
+
+  // Tips for Loading Screen
+  const tips = [
+    "💡 余白（ホワイトスペース）は「何もない」ではなく「洗練」を生みます。",
+    "💡 見出しと本文のコントラスト（ジャンプ率）を意識しましょう。",
+    "💡 3色以上の色を使うときは、メインカラー:サブ:アクセント=70:25:5 を目安に。",
+    "💡 「揃える」ことは、デザインを整理する基本です。",
+    "💡 フォントは最大でも2〜3種類に抑えると統一感が出ます。",
+    "💡 視線は「Z」の文字を描くように移動します。",
+    "💡 近接（近付ける）、整列（並べる）、反復（繰り返す）、対比（差をつける）",
+    "💡 写真の上に文字を載せるときは、明度差を確保しましょう。",
+  ];
+
+  useEffect(() => {
+    if (loading) {
+      const interval = setInterval(() => {
+        setCurrentTip((prev) => (prev + 1) % tips.length);
+      }, 4000);
+      return () => clearInterval(interval);
+    }
+  }, [loading]);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const apiUrl = getEffectiveApiUrl();
+        const res = await fetch(`${apiUrl}/user/status`, { headers: getAuthHeaders() });
+        if (res.ok) setUserStatus(await res.json());
+      } catch (e) { console.error(e); }
+    };
+    fetchStatus();
+  }, []); // Run on mount
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('is_premium');
@@ -290,27 +325,7 @@ function Home() {
 
   // --- RENDER ---
 
-  // Tips for Loading Screen
-  const tips = [
-    "💡 余白（ホワイトスペース）は「何もない」ではなく「洗練」を生みます。",
-    "💡 見出しと本文のコントラスト（ジャンプ率）を意識しましょう。",
-    "💡 3色以上の色を使うときは、メインカラー:サブ:アクセント=70:25:5 を目安に。",
-    "💡 「揃える」ことは、デザインを整理する基本です。",
-    "💡 フォントは最大でも2〜3種類に抑えると統一感が出ます。",
-    "💡 視線は「Z」の文字を描くように移動します。",
-    "💡 近接（近付ける）、整列（並べる）、反復（繰り返す）、対比（差をつける）",
-    "💡 写真の上に文字を載せるときは、明度差を確保しましょう。",
-  ];
-  const [currentTip, setCurrentTip] = useState(0);
-
-  useEffect(() => {
-    if (loading) {
-      const interval = setInterval(() => {
-        setCurrentTip((prev) => (prev + 1) % tips.length);
-      }, 4000);
-      return () => clearInterval(interval);
-    }
-  }, [loading]);
+  // Loading UI
 
   // Loading UI
   if (loading) {
@@ -339,18 +354,6 @@ function Home() {
   }
 
   // 2. Input Form (If no data yet)
-  const [userStatus, setUserStatus] = useState(null);
-
-  useEffect(() => {
-    const fetchStatus = async () => {
-      try {
-        const apiUrl = getEffectiveApiUrl();
-        const res = await fetch(`${apiUrl}/user/status`, { headers: getAuthHeaders() });
-        if (res.ok) setUserStatus(await res.json());
-      } catch (e) { console.error(e); }
-    };
-    fetchStatus();
-  }, []); // Run on mount
 
   if (!data) {
     const isPremium = userStatus?.plan === 'premium';
