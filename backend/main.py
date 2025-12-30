@@ -665,7 +665,7 @@ def analyze_image(
     
     return {"status": "accepted", "job_id": analysis_id}
 
-@app.post("/stripe-webhook")
+@app.post("/stripe_webhook")
 async def stripe_webhook(request: Request):
     """Webhook to handle Stripe payment events (Automated Premium Linking)"""
     payload = await request.body()
