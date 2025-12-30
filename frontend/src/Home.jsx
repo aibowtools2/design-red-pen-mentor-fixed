@@ -283,6 +283,7 @@ function Home() {
     }
   };
 
+  /* 
   // Fetch History on Mount + Check for deep link ID
   useEffect(() => {
     const analysisId = searchParams.get('id');
@@ -322,6 +323,7 @@ function Home() {
       setLoading(false);
     }
   };
+  */
 
   // --- RENDER ---
 
@@ -616,7 +618,8 @@ function Home() {
           Analyzed by デザイン赤ペン先生 (Design Red Pen Mentor)
         </div>
 
-        {/* History Section */}
+        {/* 
+        // History Section
         {history.length > 0 && (
           <div style={{ marginTop: '50px', borderTop: '1px solid #333', paddingTop: '30px' }}>
             <h3 style={{ textAlign: 'center', marginBottom: '20px' }}>🕒 Recent Analyses (History)</h3>
@@ -642,6 +645,7 @@ function Home() {
             </div>
           </div>
         )}
+        */}
       </div>
 
       <footer className="footer" style={{ marginTop: '50px', padding: '40px 20px', borderTop: '1px solid rgba(255,255,255,0.1)', textAlign: 'center' }}>
