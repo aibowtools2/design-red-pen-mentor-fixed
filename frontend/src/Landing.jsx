@@ -149,17 +149,17 @@ const Landing = () => {
 
                                 <div className="card" style={{ marginTop: '30px' }}>
                                     <h3 className="section-title">📉 10項目 詳細スコア</h3>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                    <div className="metrics-grid">
                                         {Object.entries(mockAnalysis.detailed_metrics).map(([key, item]) => (
-                                            <div key={key} style={{ background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px' }}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                                                    <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{key}</span>
-                                                    <span style={{ color: 'var(--accent-green)', fontWeight: 'bold' }}>{item.score}/10</span>
+                                            <div key={key} className="metric-item">
+                                                <div className="metric-header">
+                                                    <span className="metric-name">{key}</span>
+                                                    <span className="metric-score">{item.score}/10</span>
                                                 </div>
                                                 <div className="progress-bar-bg">
                                                     <div className="progress-bar-fill" style={{ width: `${item.score * 10}%` }}></div>
                                                 </div>
-                                                <p style={{ fontSize: '0.75rem', opacity: 0.7, margin: 0 }}>{item.comment}</p>
+                                                <p className="metric-comment">{item.comment}</p>
                                             </div>
                                         ))}
                                     </div>
@@ -174,13 +174,13 @@ const Landing = () => {
                                         <div className="google-font-rec">
                                             <strong>Suggested: </strong> {mockAnalysis.google_data_insights.google_fonts_recommendation.suggested_font_name}
                                         </div>
-                                        <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>{mockAnalysis.google_data_insights.google_fonts_recommendation.reason}</p>
+                                        <p className="google-insight-text">{mockAnalysis.google_data_insights.google_fonts_recommendation.reason}</p>
                                     </div>
                                     <div>
                                         <span className="google-label">Material Design 3</span>
                                         <p style={{ color: 'var(--accent-red)', fontWeight: 'bold' }}>
                                             {mockAnalysis.google_data_insights.material_design_check.verdict}:
-                                            <span style={{ color: 'white', fontWeight: 'normal', marginLeft: '10px' }}>{mockAnalysis.google_data_insights.material_design_check.advice}</span>
+                                            <span className="google-insight-text" style={{ color: 'white', fontWeight: 'normal', marginLeft: '10px' }}>{mockAnalysis.google_data_insights.material_design_check.advice}</span>
                                         </p>
                                     </div>
                                 </div>
@@ -239,7 +239,7 @@ const Landing = () => {
 
             {/* Final CTA */}
             <section className="lp-cta">
-                <h2 style={{ fontSize: '2.5rem', marginBottom: '20px' }}>デザインを磨く準備はできましたか？</h2>
+                <h2 className="final-cta-title">デザインを磨く準備は<br />できましたか？</h2>
                 <p style={{ marginBottom: '30px', opacity: 0.8 }}>今すぐ登録して、AIメンターによる添削を体験しましょう。</p>
                 <Link to="/signup" className="primary-btn" style={{ padding: '20px 60px', fontSize: '1.2rem' }}>無料でアカウントを作成</Link>
             </section>

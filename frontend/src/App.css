@@ -315,6 +315,60 @@ body {
 }
 
 /* Mobile Responsiveness */
+/* Metrics Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.metric-item {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.metric-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.metric-name {
+  font-weight: bold;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metric-score {
+  color: var(--accent-green);
+  font-weight: bold;
+}
+
+.metric-comment {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  margin: 0;
+}
+
+/* Google Insights */
+.google-insight-text {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  line-height: 1.6;
+}
+
+/* Final CTA */
+.final-cta-title {
+  font-size: 2.5rem;
+  line-height: 1.2;
+  margin-bottom: 20px;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
 @media (max-width: 768px) {
   .tensaku-grid {
     grid-template-columns: 1fr;
@@ -334,6 +388,33 @@ body {
 
   .image-preview {
     margin-bottom: 20px;
+  }
+
+  /* Specific mobile overrides for Landing Page */
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .metric-name {
+    font-size: 0.8rem;
+    white-space: normal;
+    /* Allow wrap if name is long but in 1col it's safer */
+  }
+
+  .metric-score {
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+
+  .google-insight-text {
+    font-size: 0.85rem;
+    /* Unified smaller size */
+  }
+
+  .final-cta-title {
+    font-size: 1.8rem;
+    margin-top: 40px;
   }
 }
 

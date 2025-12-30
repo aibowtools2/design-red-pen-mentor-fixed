@@ -88,17 +88,17 @@ const Demo = () => {
 
                         <div className="card" style={{ marginTop: '30px' }}>
                             <h3 className="section-title">📉 10項目 詳細スコア</h3>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                            <div className="metrics-grid">
                                 {Object.entries(mockAnalysis.detailed_metrics).map(([key, item]) => (
-                                    <div key={key} style={{ background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                                            <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{key}</span>
-                                            <span style={{ color: 'var(--accent-green)', fontWeight: 'bold' }}>{item.score}/10</span>
+                                    <div key={key} className="metric-item">
+                                        <div className="metric-header">
+                                            <span className="metric-name">{key}</span>
+                                            <span className="metric-score">{item.score}/10</span>
                                         </div>
                                         <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginBottom: '5px' }}>
                                             <div style={{ width: `${item.score * 10}%`, height: '100%', background: 'var(--accent-green)', borderRadius: '2px' }}></div>
                                         </div>
-                                        <p style={{ fontSize: '0.75rem', opacity: 0.7, margin: 0 }}>{item.comment}</p>
+                                        <p className="metric-comment">{item.comment}</p>
                                     </div>
                                 ))}
                             </div>
@@ -124,7 +124,7 @@ const Demo = () => {
                                     <strong>Suggested: </strong>
                                     {mockAnalysis.google_data_insights.google_fonts_recommendation.suggested_font_name}
                                 </div>
-                                <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+                                <p className="google-insight-text">
                                     {mockAnalysis.google_data_insights.google_fonts_recommendation.reason}
                                 </p>
                             </div>
@@ -133,7 +133,7 @@ const Demo = () => {
                                 <p><strong>Check:</strong> {mockAnalysis.google_data_insights.material_design_check.metric}</p>
                                 <p style={{ color: 'var(--accent-red)', fontWeight: 'bold' }}>
                                     {mockAnalysis.google_data_insights.material_design_check.verdict}:
-                                    <span style={{ color: 'white', fontWeight: 'normal', marginLeft: '5px' }}>
+                                    <span className="google-insight-text" style={{ color: 'white', fontWeight: 'normal', marginLeft: '5px' }}>
                                         {mockAnalysis.google_data_insights.material_design_check.advice}
                                     </span>
                                 </p>
