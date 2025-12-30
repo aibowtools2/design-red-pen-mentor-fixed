@@ -49,14 +49,14 @@ const Landing = () => {
                 naruhodo_principle: "整列（Alignment）",
                 issue: "文字の配置がバラバラで、見る人に不安感を与えます",
                 suggestion: "見えないグリッド線を引き、全ての要素の左端を揃えるだけで信頼感が回復します。",
-                quantitative_value: "左揃えに統一"
+                quantitative_value: ""
             },
             {
                 priority: "HIGH",
                 naruhodo_principle: "近接（Proximity）",
                 issue: "雪のアイコンとテキストの関係性が不明確です",
                 suggestion: "装飾は情報の邪魔にならない場所に移動し、関連するテキスト情報同士を近づけてグループ化してください。",
-                quantitative_value: "マージンを統一"
+                quantitative_value: ""
             }
         ]
     };
