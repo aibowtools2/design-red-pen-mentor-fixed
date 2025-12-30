@@ -16,6 +16,19 @@ backend/verify_api.py
 backend/read_backup.py
 backend/inspect_schema.py
 backend/add_column_migration.py
+backend/check_usage_stats.py
+backend/reset_usage.py
+backend/upgrade_user.py
+backend/ensure_tables.py
+backend/check_db.py
+backend/check_supabase_users.py
+backend/debug_db.py
+
+# Logs
+*.log
+backend/*.log
+user_list.txt
+
 
 # Node
 node_modules/
