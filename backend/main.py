@@ -611,7 +611,9 @@ def analyze_image(
         raise HTTPException(status_code=401, detail="User not logged in")
     
     if not is_premium(user_id):
-        raise HTTPException(status_code=402, detail="Premium subscription required for Web analysis (500 JPY/mo)")
+        # Allow free users (3 times/day)
+        if not check_and_update_usage(user_id):
+            raise HTTPException(status_code=402, detail="Daily limit reached. Upgrade for unlimited access.")
 
     # Security: Limit file size (e.g., 10MB)
     MAX_SIZE = 10 * 1024 * 1024
