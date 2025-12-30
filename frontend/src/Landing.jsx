@@ -105,14 +105,15 @@ const Landing = () => {
             <header className="lp-hero">
                 <div className="container hero-container">
                     <div className="hero-content-left">
-                        <h1 className="hero-title">あなたのデザインを、<br /><span className="highlight">3秒でスコアリング</span>。</h1>
+                        <h1 className="hero-title">あなたのデザインを、<br /><span className="highlight">スコアリング</span>。</h1>
                         <p className="hero-subtitle">
-                            Googleの膨大な学習データを元に、AIがあなたの作品を<span className="no-break">客観的に評価。</span><br />
+                            Googleの膨大な学習データを元に、<br />
+                            AIがあなたの作品を<span className="no-break">客観的に評価。</span><br />
                             改善点を具体的に<span className="marker-highlight">「赤ペン」</span>で言語化します。
                         </p>
                         <div className="hero-actions">
                             <Link to="/signup" className="primary-btn hero-btn">今すぐ無料で試す</Link>
-                            <a href="#demo" className="text-link hero-secondary-btn">添削サンプルを見る ↓</a>
+                            <a href="#demo" className="secondary-btn hero-btn" style={{ textDecoration: 'none' }}>添削サンプルを見る ↓</a>
                         </div>
                     </div>
                     <div className="hero-content-right desktop-only">
@@ -213,24 +214,6 @@ const Landing = () => {
                     <p className="text-center" style={{ marginBottom: '40px', opacity: 0.8 }}>まずは無料で、AIの実力を体験してください。</p>
 
                     <div className="pricing-grid">
-                        {/* Free Plan */}
-                        <div className="card pricing-card free-plan">
-                            <div className="plan-badge">お試し</div>
-                            <h3 className="plan-name">Free Plan</h3>
-                            <div className="price-display">
-                                <span className="currency">¥</span>
-                                <span className="amount">0</span>
-                                <span className="period">/ 月</span>
-                            </div>
-                            <ul className="benefits-list">
-                                <li>✨ <b>AIデザイン解析 (月3回まで)</b></li>
-                                <li>📊 <b>基本スコアリング</b></li>
-                                <li>❌ <span style={{ opacity: 0.5 }}>詳細改善プラン</span></li>
-                                <li>❌ <span style={{ opacity: 0.5 }}>過去履歴の保存</span></li>
-                            </ul>
-                            <Link to="/signup" className="secondary-btn" style={{ width: '100%', marginTop: 'auto' }}>無料で始める</Link>
-                        </div>
-
                         {/* Standard Plan */}
                         <div className="card pricing-card recommended-plan">
                             <div className="plan-badge recommended">人気 No.1</div>

@@ -670,7 +670,7 @@ body {
   line-height: 1.2;
   margin-bottom: 20px;
   /* Prevent weird breaks */
-  text-wrap: balance;
+  word-break: keep-all;
   overflow-wrap: break-word;
 }
 
@@ -703,6 +703,47 @@ body {
   align-items: center;
   gap: 20px;
   justify-content: flex-start;
+}
+
+/* Ensure buttons in hero look consistent */
+/* Ensure buttons in hero look consistent - specificity increased to override primary-btn */
+.hero-actions .hero-btn {
+  padding: 12px 30px;
+  font-size: 1.1rem;
+  border-radius: 50px;
+  min-width: 200px;
+  text-align: center;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  /* Override primary-btn margin */
+  border: 1px solid transparent;
+  /* Align visually with bordered secondary */
+}
+
+/* Add border to secondary explicitly if needed, but secondary-btn class handles it. 
+   We just need to ensure primary-btn doesn't have disparate margins. */
+.hero-actions .secondary-btn {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.hero-actions .primary-btn {
+  border: 1px solid transparent;
+  /* Match secondary btn border width to prevent height diff */
+}
+
+@media (max-width: 768px) {
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .hero-actions .hero-btn {
+    width: 100%;
+    margin: 10px 0 0 0;
+    /* Add margin back on mobile if stacked */
+  }
 }
 
 .section-header-center {
@@ -788,8 +829,8 @@ body {
 }
 
 .pricing-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  display: flex;
+  justify-content: center;
   gap: 30px;
   max-width: 900px;
   margin: 0 auto;
@@ -802,6 +843,8 @@ body {
   text-align: center;
   position: relative;
   height: 100%;
+  width: 100%;
+  max-width: 450px;
 }
 
 .free-plan {
