@@ -17,6 +17,14 @@ body {
   overflow-x: hidden;
 }
 
+.landing-page {
+  position: relative;
+  /* Ensure absolute children position correctly */
+  width: 100%;
+  overflow-x: hidden;
+  /* Prevent horizontal scroll */
+}
+
 .dashboard {
   max-width: 1200px;
   margin: 0 auto;
@@ -475,6 +483,8 @@ body {
   padding: 20px 5%;
   position: absolute;
   top: 0;
+  left: 0;
+  /* Force left align */
   width: 100%;
   z-index: 100;
   box-sizing: border-box;
@@ -661,7 +671,6 @@ body {
   margin-bottom: 20px;
   /* Prevent weird breaks */
   text-wrap: balance;
-  word-break: keep-all;
   overflow-wrap: break-word;
 }
 
