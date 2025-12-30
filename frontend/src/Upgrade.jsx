@@ -66,7 +66,7 @@ const Upgrade = () => {
             <div className="card" style={{ maxWidth: '600px', width: '100%', padding: '50px', border: '1px solid #FFD700', boxShadow: '0 0 30px rgba(255, 215, 0, 0.2)' }}>
                 <h2 style={{ textAlign: 'center', fontSize: '2rem', marginBottom: '20px' }}>Unlimited Access</h2>
                 <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                    {uid ? (
+                    {isLineUser ? (
                         <>
                             <div style={{ fontSize: '1.2rem', color: '#aaa', textDecoration: 'line-through', marginBottom: '5px' }}>
                                 通常価格 ¥500
@@ -91,7 +91,6 @@ const Upgrade = () => {
                 <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 40px 0', fontSize: '1.1rem', lineHeight: '1.8' }}>
                     <li>✨ <b>回数無制限</b> (1日の上限なし)</li>
                     <li>🚀 <b>優先的</b> な分析処理 (混雑時も優先)</li>
-                    <li>📂 <b>全履歴</b> の閲覧・保存が無期限</li>
                     <li>🎓 <b>高度な</b> デザインアドバイス機能</li>
                 </ul>
 
