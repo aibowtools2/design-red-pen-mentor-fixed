@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import './App.css';
 
@@ -61,56 +61,75 @@ const Landing = () => {
         ]
     };
 
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    const toggleMenu = () => {
+        setIsMenuOpen(!isMenuOpen);
+    };
+
     return (
         <div className="landing-page">
             {/* Header / Nav */}
             <nav className="lp-nav">
-                <div className="logo">デザイン赤ペン先生</div>
-                <div className="nav-links">
+                <div className="logo">デザイン赤ペン先生 <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>v2.3</span></div>
+
+                {/* Desktop Navigation */}
+                <div className="nav-links desktop-only">
+                    <a href="#demo" className="nav-btn">デモ体験</a>
+                    <a href="#features" className="nav-btn">特徴</a>
+                    <a href="#pricing" className="nav-btn">料金</a>
                     <Link to="/login" className="nav-btn">ログイン</Link>
                     <Link to="/signup" className="primary-btn landing-cta-small">無料で始める</Link>
+                </div>
+
+                {/* Mobile Hamburger Button */}
+                <button className="hamburger-btn mobile-only" onClick={toggleMenu} aria-label="Menu">
+                    <span className={`bar ${isMenuOpen ? 'open' : ''}`}></span>
+                    <span className={`bar ${isMenuOpen ? 'open' : ''}`}></span>
+                    <span className={`bar ${isMenuOpen ? 'open' : ''}`}></span>
+                </button>
+
+                {/* Mobile Menu Overlay */}
+                <div className={`mobile-menu ${isMenuOpen ? 'open' : ''}`}>
+                    <a href="#demo" className="mobile-nav-link" onClick={toggleMenu}>デモ体験</a>
+                    <a href="#features" className="mobile-nav-link" onClick={toggleMenu}>特徴</a>
+                    <a href="#pricing" className="mobile-nav-link" onClick={toggleMenu}>料金</a>
+                    <div className="mobile-auth-buttons">
+                        <Link to="/login" className="nav-btn mobile-auth-btn" onClick={toggleMenu}>ログイン</Link>
+                        <Link to="/signup" className="primary-btn landing-cta-small mobile-auth-btn" onClick={toggleMenu}>無料で始める</Link>
+                    </div>
                 </div>
             </nav>
 
             {/* Hero Section */}
             <header className="lp-hero">
-                <div className="hero-content">
-                    <h1 className="hero-title">あなたのデザインを、<br /><span className="highlight">プロの視点</span>で添削。</h1>
-                    <p className="hero-subtitle">
-                        Google AIが学習した<strong>数千億のデータ</strong>から導かれた<br />
-                        客観的視点で、あなたの作品を<br />
-                        数値化・言語化します。
-                    </p>
-                    <div className="hero-actions">
-                        <Link to="/signup" className="primary-btn hero-btn">今すぐ無料で登録する</Link>
-                        <a href="#demo" className="text-link hero-secondary-btn">添削サンプルを見る ↓</a>
+                <div className="container hero-container">
+                    <div className="hero-content-left">
+                        <h1 className="hero-title">あなたのデザインを、<br /><span className="highlight">3秒でスコアリング</span>。</h1>
+                        <p className="hero-subtitle">
+                            Googleの膨大な学習データを元に、AIがあなたの作品を客観的に評価。<br />
+                            改善点を具体的に<span className="marker-highlight">「赤ペン」</span>で言語化します。
+                        </p>
+                        <div className="hero-actions">
+                            <Link to="/signup" className="primary-btn hero-btn">今すぐ無料で試す</Link>
+                            <a href="#demo" className="text-link hero-secondary-btn">添削サンプルを見る ↓</a>
+                        </div>
+                    </div>
+                    <div className="hero-content-right desktop-only">
+                        {/* Image will be placed here via CSS background or img tag */}
+                        <img src="/hero_red_pen_mockup.png" alt="AI Red Pen Correction" className="hero-image-visual" />
                     </div>
                 </div>
             </header>
 
-            {/* Pricing Section */}
-            <section className="lp-pricing">
-                <div className="card pricing-card">
-                    <h2 className="section-title">Web版スタンダードプラン</h2>
-                    <div className="price-display">
-                        <span className="currency">¥</span>
-                        <span className="amount">500</span>
-                        <span className="period">/ 月 (税込)</span>
-                    </div>
-                    <ul className="benefits-list">
-                        <li>✨ <b>AIデザイン解析 無制限</b></li>
-                        <li>🚀 <b>優先的な解析処理</b></li>
-                        <li>🔒 <b>画像データは保持しない安心設計</b></li>
-                        <li>📊 <b>詳細な改善プランの提示</b></li>
-                    </ul>
-                    <Link to="/signup" className="primary-btn" style={{ width: '100%', marginTop: '20px' }}>このプランで始める</Link>
-                </div>
-            </section>
-
-            {/* Demo Section */}
+            {/* Demo Section (Moved Up) */}
             <section id="demo" className="lp-demo-section">
                 <div className="container">
-                    <h2 className="section-title text-center" style={{ marginBottom: '40px' }}>デザイン赤ペン先生による評価</h2>
+                    <div className="section-header-center">
+                        <span className="section-tag">Feature</span>
+                        <h2 className="section-title text-center">デザイン赤ペン先生による評価</h2>
+                        <p className="section-desc">AIがプロの視点で、あなたのデザインの「良い点」と「改善点」を指摘します。</p>
+                    </div>
 
                     <div id="report-content" className="demo-report-box" style={{ padding: '0px' }}>
                         <div className="score-card">
@@ -186,6 +205,54 @@ const Landing = () => {
                     </div>
                 </div>
             </section>
+
+            {/* Pricing Section */}
+            <section id="pricing" className="lp-pricing">
+                <div className="container">
+                    <h2 className="section-title text-center">料金プラン</h2>
+                    <p className="text-center" style={{ marginBottom: '40px', opacity: 0.8 }}>まずは無料で、AIの実力を体験してください。</p>
+
+                    <div className="pricing-grid">
+                        {/* Free Plan */}
+                        <div className="card pricing-card free-plan">
+                            <div className="plan-badge">お試し</div>
+                            <h3 className="plan-name">Free Plan</h3>
+                            <div className="price-display">
+                                <span className="currency">¥</span>
+                                <span className="amount">0</span>
+                                <span className="period">/ 月</span>
+                            </div>
+                            <ul className="benefits-list">
+                                <li>✨ <b>AIデザイン解析 (月3回まで)</b></li>
+                                <li>📊 <b>基本スコアリング</b></li>
+                                <li>❌ <span style={{ opacity: 0.5 }}>詳細改善プラン</span></li>
+                                <li>❌ <span style={{ opacity: 0.5 }}>過去履歴の保存</span></li>
+                            </ul>
+                            <Link to="/signup" className="secondary-btn" style={{ width: '100%', marginTop: 'auto' }}>無料で始める</Link>
+                        </div>
+
+                        {/* Standard Plan */}
+                        <div className="card pricing-card recommended-plan">
+                            <div className="plan-badge recommended">人気 No.1</div>
+                            <h3 className="plan-name">Standard Plan</h3>
+                            <div className="price-display">
+                                <span className="currency">¥</span>
+                                <span className="amount">500</span>
+                                <span className="period">/ 月 (税込)</span>
+                            </div>
+                            <ul className="benefits-list">
+                                <li>✨ <b>AIデザイン解析 無制限</b></li>
+                                <li>🚀 <b>優先的な解析処理</b></li>
+                                <li>🔒 <b>画像データは保持しない安心設計</b></li>
+                                <li>📊 <b>詳細な改善プランの提示</b></li>
+                            </ul>
+                            <Link to="/signup" className="primary-btn" style={{ width: '100%', marginTop: 'auto' }}>このプランで始める</Link>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
 
             {/* Final CTA */}
             <section className="lp-cta">
