@@ -24,6 +24,8 @@ class User(Base):
     __tablename__ = "users"
 
     user_id = Column(String, primary_key=True, index=True) # Line UID or UUID
+    email = Column(String, unique=True, index=True, nullable=True)
+    password_hash = Column(String, nullable=True)
     is_premium = Column(Boolean, default=False)
     premium_expiry = Column(DateTime, nullable=True)
     plan_type = Column(String, default="free")

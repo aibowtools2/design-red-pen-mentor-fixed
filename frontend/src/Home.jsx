@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import './App.css';
 
 // Fix Version: 1.2 (Force Rebuild)
@@ -57,14 +57,20 @@ const compressImage = async (file) => {
   });
 };
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://design-red-pen-mentor.onrender.com';
+import API_URL from './config';
 // Fallback for local dev
 const getEffectiveApiUrl = () => {
   if (window.location.hostname === 'localhost') return 'http://localhost:8000';
   return API_URL;
 };
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+};
+
 function Home() {
+  const [searchParams] = useSearchParams();
   const [data, setData] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -77,6 +83,12 @@ function Home() {
     target: '',
     purpose: ''
   });
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('is_premium');
+    navigate('/login');
+  };
 
   // Check valid JSON helper
   const parsAnalysis = (inputData) => {
@@ -136,14 +148,29 @@ function Home() {
     const apiUrl = getEffectiveApiUrl();
 
     // Submit
-    const res = await fetch(`${apiUrl}/analyze`, { method: 'POST', body: formData });
+    const res = await fetch(`${apiUrl}/analyze`, {
+      method: 'POST',
+      body: formData,
+      headers: { ...getAuthHeaders() }
+    });
+
+    if (res.status === 401) {
+      handleLogout();
+      return;
+    }
+    if (res.status === 402) {
+      navigate('/upgrade');
+      return;
+    }
     if (!res.ok) throw new Error(`Submission Error: ${res.status}`);
     const { job_id } = await res.json();
 
     // Poll
     for (let i = 0; i < 100; i++) {
       await new Promise(r => setTimeout(r, 2000)); // Wait 2s
-      const sRes = await fetch(`${apiUrl}/status/${job_id}`);
+      const sRes = await fetch(`${apiUrl}/status/${job_id}`, {
+        headers: { ...getAuthHeaders() }
+      });
       const job = await sRes.json();
 
       if (job.status === "completed") {
@@ -219,12 +246,19 @@ function Home() {
     }
   };
 
-  // Fetch History on Mount
+  // Fetch History on Mount + Check for deep link ID
   useEffect(() => {
+    const analysisId = searchParams.get('id');
+    if (analysisId) {
+      loadHistoryItem(analysisId);
+    }
+
     const fetchHistory = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-        const res = await fetch(`${apiUrl}/history`);
+        const apiUrl = getEffectiveApiUrl();
+        const res = await fetch(`${apiUrl}/history`, {
+          headers: { ...getAuthHeaders() }
+        });
         if (res.ok) setHistory(await res.json());
       } catch (e) {
         console.error("History fetch failed", e);
@@ -235,10 +269,12 @@ function Home() {
 
   // Load specific history item
   const loadHistoryItem = async (id) => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const apiUrl = getEffectiveApiUrl();
     setLoading(true);
     try {
-      const res = await fetch(`${apiUrl}/history/${id}`);
+      const res = await fetch(`${apiUrl}/history/${id}`, {
+        headers: { ...getAuthHeaders() }
+      });
       const json = await res.json();
       setData(json);
       // Scroll to top
@@ -306,6 +342,9 @@ function Home() {
       <div className="dashboard">
         <header className="hero">
           <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', padding: '0 20px', gap: '10px' }}>
+            <button onClick={handleLogout} className="text-link" style={{ fontSize: '0.9rem', color: '#ff5858' }}>
+              🚪 Logout
+            </button>
             <button onClick={fillDemoData} style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', padding: '5px 15px', borderRadius: '20px', cursor: 'pointer' }}>
               🧪 Test Mode
             </button>

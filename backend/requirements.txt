@@ -9,3 +9,6 @@ line-bot-sdk
 psycopg2-binary
 sqlalchemy
 supabase
+pyjwt
+passlib[bcrypt]
+pydantic[email]

@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 venv/
 .env
+.env.*
+*.log
 
 # Node
 node_modules/
@@ -19,3 +21,15 @@ dist/
 data.json
 watched_videos/
 *.mp4
+
+# Sensitive / Backup
+*_token.py
+*token.py
+*_backup
+*_backup.*
+production_migration.py
+check_remote.py
+debug_token.py
+reconstruct_env.py
+sanitize_env.py
+verify_webhook_logic.py

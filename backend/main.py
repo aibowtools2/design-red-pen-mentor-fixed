@@ -8,10 +8,12 @@ import uuid
 import time
 import datetime
 import stripe
-from typing import List
+from typing import List, Optional
 from dotenv import load_dotenv
-import logging
 import tempfile
+import jwt
+from passlib.context import CryptContext
+from pydantic import BaseModel, EmailStr
 
 from gemini_client import analyze_image_design
 
@@ -28,6 +30,31 @@ from linebot import WebhookParser
 # Logger Setup
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Auth Config
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this-in-prod")
+ALGORITHM = "HS256"
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+class UserCreate(BaseModel):
+    email: str
+    password: str
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.datetime.utcnow() + datetime.timedelta(days=30)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 load_dotenv()
 
@@ -188,6 +215,60 @@ def save_analysis_log(job_id, user_id, filename, analysis_type, data, status="co
         logger.error(f"Failed to save analysis log to DB: {e}")
 
 # --- LINE Bot Logic (DB Version) ---
+
+# --- Auth Endpoints ---
+
+@app.post("/auth/signup")
+def signup(user: UserCreate):
+    session = db.SessionLocal()
+    try:
+        db_user = session.query(db.User).filter(db.User.email == user.email).first()
+        if db_user:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        
+        new_user = db.User(
+            user_id=str(uuid.uuid4()),
+            email=user.email,
+            password_hash=get_password_hash(user.password),
+            plan_type="free"
+        )
+        session.add(new_user)
+        session.commit()
+        return {"status": "success", "message": "User created"}
+    finally:
+        session.close()
+
+@app.post("/auth/login")
+def login(user: UserLogin):
+    session = db.SessionLocal()
+    try:
+        db_user = session.query(db.User).filter(db.User.email == user.email).first()
+        if not db_user or not verify_password(user.password, db_user.password_hash):
+            if not db_user: logger.info(f"Login failed: User {user.email} not found")
+            else: logger.info(f"Login failed: Password mismatch for {user.email}")
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        
+        token = create_access_token({"sub": db_user.user_id, "email": db_user.email})
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "user_id": db_user.user_id,
+            "is_premium": db_user.is_premium
+        }
+    finally:
+        session.close()
+
+def get_current_user_id(request: Request):
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return None
+    token = auth_header.split(" ")[1]
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload.get("sub")
+    except Exception as e:
+        logger.error(f"JWT Decode Error: {e}")
+        return None
 
 def check_and_update_usage(user_id: str) -> bool:
     """Check daily usage limit using DB"""
@@ -383,9 +464,9 @@ def process_analysis_background(job_id: str, file_path: str, context: dict, file
             data["source_image"] = filename
             
             # 2. Update status and save result in DB
-            save_analysis_log(job_id, "WebUser", filename, "Web Analysis", data)
+            save_analysis_log(job_id, JOBS[job_id].get("user_id", "WebUser"), filename, "Web Analysis", data)
             
-            JOBS[job_id] = {"status": "completed", "data": data}
+            JOBS[job_id].update({"status": "completed", "data": data})
             print(f"Job {job_id}: Completed successfully.")
             
         except Exception as e:
@@ -423,14 +504,18 @@ def get_job_status(job_id: str):
     return {"status": "not_found"}
 
 @app.get("/history")
-def get_history():
-    """Retrieve history from DB"""
+def get_history(uid: Optional[str] = None):
+    """Retrieve history from DB, optionally filtered by User ID"""
     if not db.SessionLocal: return []
     
     session = db.SessionLocal()
     try:
-        # Get latest 50
-        logs = session.query(db.AnalysisLog).order_by(db.AnalysisLog.timestamp.desc()).limit(50).all()
+        query = session.query(db.AnalysisLog)
+        if uid:
+            # Match LINE user_id or Web user_id
+            query = query.filter(db.AnalysisLog.user_id == uid.strip())
+            
+        logs = query.order_by(db.AnalysisLog.timestamp.desc()).limit(50).all()
         result = []
         for log in logs:
             result.append({
@@ -438,7 +523,8 @@ def get_history():
                 "timestamp": log.timestamp,
                 "type": log.analysis_type,
                 "image": log.image_filename,
-                "score": log.design_score
+                "score": log.design_score,
+                "status": log.status
             })
         return result
     except Exception as e:
@@ -463,12 +549,20 @@ def get_history_item(analysis_id: str):
 
 @app.post("/analyze")
 def analyze_image(
+    request: Request,
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     type: str = Form(""),
     target: str = Form(""),
     purpose: str = Form("")
 ):
+    user_id = get_current_user_id(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User not logged in")
+    
+    if not is_premium(user_id):
+        raise HTTPException(status_code=402, detail="Premium subscription required for Web analysis (500 JPY/mo)")
+
     # Security: Limit file size (e.g., 10MB)
     MAX_SIZE = 10 * 1024 * 1024
     file.file.seek(0, os.SEEK_END)
@@ -514,6 +608,7 @@ def analyze_image(
     context = {"type": type, "target": target, "purpose": purpose}
     
     # Start Background Task
+    JOBS[analysis_id] = {"status": "pending", "user_id": user_id}
     background_tasks.add_task(process_analysis_background, analysis_id, file_path, context, unique_filename)
     
     return {"status": "accepted", "job_id": analysis_id}
