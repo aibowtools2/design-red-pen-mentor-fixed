@@ -113,7 +113,7 @@ const Landing = () => {
                         </p>
                         <div className="hero-actions">
                             <Link to="/signup" className="primary-btn hero-btn">今すぐ無料で試す</Link>
-                            <a href="#demo" className="secondary-btn hero-btn" style={{ textDecoration: 'none' }}>添削サンプルを見る ↓</a>
+                            <a href="#demo" className="secondary-btn hero-btn" style={{ textDecoration: 'none' }}>添削サンプルを見る</a>
                         </div>
                     </div>
                     <div className="hero-content-right desktop-only">
