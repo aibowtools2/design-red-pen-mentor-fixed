@@ -5,6 +5,7 @@ import './App.css';
 import API_URL, { STRIPE_PAYMENT_LINK } from './config';
 
 function Signup() {
+    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -25,11 +26,18 @@ function Signup() {
             return;
         }
 
+        // Username validation
+        if (!/^[a-z0-9]{1,10}$/.test(username)) {
+            setError('ユーザー名は半角英数字（小文字）・10文字以内で入力してください');
+            setLoading(false);
+            return;
+        }
+
         try {
             const response = await fetch(`${API_URL}/auth/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ username, email, password }),
             });
 
             const data = await response.json();
@@ -65,11 +73,24 @@ function Signup() {
                 {error && <div className="error-badge">{error}</div>}
                 {success && (
                     <div className="success-badge">
-                        {isPremium ? 'アカウントを作成しました！決済画面へ移動します...' : '登録が完了しました！ログイン画面へ移動します...'}
+                        {isPremium ? 'アカウント作成＆確認メール送信！決済へ移動します...' : '登録完了！確認メールを送信しました。'}
                     </div>
                 )}
 
                 <form onSubmit={handleSignup}>
+                    <div className="input-group">
+                        <label>ユーザー名 <span style={{ fontSize: '0.8em', opacity: 0.7 }}>(英数小文字 10文字以内)</span></label>
+                        <input
+                            type="text"
+                            className="glass-input"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            required
+                            placeholder="user123"
+                            pattern="[a-z0-9]{1,10}"
+                            title="半角英数字（小文字）、10文字以内"
+                        />
+                    </div>
                     <div className="input-group">
                         <label>メールアドレス</label>
                         <input

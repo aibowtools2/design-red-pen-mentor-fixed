@@ -24,6 +24,7 @@ class User(Base):
     __tablename__ = "users"
 
     user_id = Column(String, primary_key=True, index=True) # Line UID or UUID
+    username = Column(String, unique=True, index=True, nullable=True) # New: 10char limit
     email = Column(String, unique=True, index=True, nullable=True)
     password_hash = Column(String, nullable=True)
     is_premium = Column(Boolean, default=False)

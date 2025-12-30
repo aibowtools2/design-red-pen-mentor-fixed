@@ -36,9 +36,17 @@ SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this-in-prod")
 ALGORITHM = "HS256"
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+import re
+
 class UserCreate(BaseModel):
+    username: str
     email: str
     password: str
+
+    # Validator
+    def validate_username(self):
+        if not re.match(r'^[a-z0-9]{1,10}$', self.username):
+            raise ValueError("Username must be lowercase alphanumeric and max 10 chars")
 
 class UserLogin(BaseModel):
     email: str
@@ -55,6 +63,17 @@ def create_access_token(data: dict):
     expire = datetime.datetime.utcnow() + datetime.timedelta(days=30)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def send_welcome_email(to_email: str, username: str):
+    """
+    Mock Email Sender.
+    In production, use smtplib or SendGrid/Resend API.
+    """
+    logger.info(f"--- EMAIL SENT ---")
+    logger.info(f"To: {to_email}")
+    logger.info(f"Subject: Welcome to Design Red Pen Mentor!")
+    logger.info(f"Body: Hello {username}, thank you for registering! Your account is ready.")
+    logger.info(f"------------------")
 
 load_dotenv()
 
@@ -219,21 +238,35 @@ def save_analysis_log(job_id, user_id, filename, analysis_type, data, status="co
 # --- Auth Endpoints ---
 
 @app.post("/auth/signup")
-def signup(user: UserCreate):
+def signup(user: UserCreate, background_tasks: BackgroundTasks):
+    # Validation
+    if not re.match(r'^[a-z0-9]{1,10}$', user.username):
+        raise HTTPException(status_code=400, detail="Username must be lowercase alphanumeric and max 10 chars")
+
     session = db.SessionLocal()
     try:
-        db_user = session.query(db.User).filter(db.User.email == user.email).first()
-        if db_user:
+        # Check Username
+        if session.query(db.User).filter(db.User.username == user.username).first():
+            raise HTTPException(status_code=400, detail="Username already taken")
+
+        # Check Email
+        if session.query(db.User).filter(db.User.email == user.email).first():
             raise HTTPException(status_code=400, detail="Email already registered")
         
         new_user = db.User(
             user_id=str(uuid.uuid4()),
+            username=user.username,
             email=user.email,
             password_hash=get_password_hash(user.password),
-            plan_type="free"
+            plan_type="free",
+            daily_usage_count=0
         )
         session.add(new_user)
         session.commit()
+        
+        # Trigger Email
+        background_tasks.add_task(send_welcome_email, user.email, user.username)
+
         return {"status": "success", "message": "User created", "user_id": new_user.user_id}
     finally:
         session.close()

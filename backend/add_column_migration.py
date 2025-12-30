@@ -1,6 +1,9 @@
 import os
 import sqlalchemy
 from sqlalchemy import create_engine, text
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Get Database URL
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -16,15 +19,21 @@ engine = create_engine(DATABASE_URL)
 
 def run_migration():
     with engine.connect() as connection:
+        # 1. Add daily_usage_count (if missed)
         try:
-            # Check if column exists
-            # This is a basic check; for production, use Alembic properly.
-            # But for this rapid dev, raw SQL is fine.
             print("Attempting to add daily_usage_count column...")
             connection.execute(text("ALTER TABLE users ADD COLUMN daily_usage_count INTEGER DEFAULT 0;"))
-            print("Column added successfully.")
+            print("Column 'daily_usage_count' added.")
         except Exception as e:
-            print(f"Migration might have failed (column might exist): {e}")
+            print(f"'daily_usage_count' migration skipped/failed: {e}")
+
+        # 2. Add username
+        try:
+            print("Attempting to add username column...")
+            connection.execute(text("ALTER TABLE users ADD COLUMN username VARCHAR;"))
+            print("Column 'username' added.")
+        except Exception as e:
+            print(f"'username' migration skipped/failed: {e}")
 
 if __name__ == "__main__":
     run_migration()
