@@ -17,23 +17,22 @@ if DATABASE_URL.startswith("postgres://"):
 
 engine = create_engine(DATABASE_URL)
 
-def run_migration():
+def add_column_if_not_exists(table_name, column_name, column_type):
     with engine.connect() as connection:
-        # 1. Add daily_usage_count (if missed)
         try:
-            print("Attempting to add daily_usage_count column...")
-            connection.execute(text("ALTER TABLE users ADD COLUMN daily_usage_count INTEGER DEFAULT 0;"))
-            print("Column 'daily_usage_count' added.")
+            print(f"Attempting to add {column_name} column...")
+            connection.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type};"))
+            connection.commit()
+            print(f"Column '{column_name}' added.")
         except Exception as e:
-            print(f"'daily_usage_count' migration skipped/failed: {e}")
+            connection.rollback()
+            print(f"'{column_name}' migration skipped/failed: {e}")
 
-        # 2. Add username
-        try:
-            print("Attempting to add username column...")
-            connection.execute(text("ALTER TABLE users ADD COLUMN username VARCHAR;"))
-            print("Column 'username' added.")
-        except Exception as e:
-            print(f"'username' migration skipped/failed: {e}")
+def run_migration():
+    add_column_if_not_exists("users", "daily_usage_count", "INTEGER DEFAULT 0")
+    add_column_if_not_exists("users", "username", "VARCHAR")
+    add_column_if_not_exists("users", "email", "VARCHAR")
+    add_column_if_not_exists("users", "password_hash", "VARCHAR")
 
 if __name__ == "__main__":
     run_migration()

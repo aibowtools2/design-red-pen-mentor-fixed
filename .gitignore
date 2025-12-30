@@ -3,8 +3,19 @@ __pycache__/
 *.py[cod]
 venv/
 .env
+.env.local
 .env.*
-*.log
+! .env.local_backup
+
+# Temporary scripts
+fix_env.py
+verify_api.py
+read_backup.py
+backend/fix_env.py
+backend/verify_api.py
+backend/read_backup.py
+backend/inspect_schema.py
+backend/add_column_migration.py
 
 # Node
 node_modules/

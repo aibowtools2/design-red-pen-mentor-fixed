@@ -9,6 +9,9 @@ logger = logging.getLogger(__name__)
 
 # Placeholder - will be loaded from env
 DATABASE_URL = os.getenv("DATABASE_URL")
+print(f"DEBUG: Loaded DATABASE_URL: {DATABASE_URL}")
+if not DATABASE_URL:
+    DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/design_mentor"
 
 engine = None
 SessionLocal = None

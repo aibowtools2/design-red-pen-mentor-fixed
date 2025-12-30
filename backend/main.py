@@ -11,14 +11,15 @@ import stripe
 from typing import List, Optional
 from dotenv import load_dotenv
 import tempfile
+import logging
 import jwt
-from passlib.context import CryptContext
+import bcrypt
 from pydantic import BaseModel, EmailStr
 
-from gemini_client import analyze_image_design
+from .gemini_client import analyze_image_design
 
 # Database Imports
-import db
+from . import db
 from sqlalchemy.orm import Session
 
 # LINE Bot SDK
@@ -34,7 +35,7 @@ logger = logging.getLogger(__name__)
 # Auth Config
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this-in-prod")
 ALGORITHM = "HS256"
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 import re
 
@@ -53,10 +54,13 @@ class UserLogin(BaseModel):
     password: str
 
 def get_password_hash(password):
-    return pwd_context.hash(password)
+    # Use bcrypt directly to avoid passlib version check issues
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
 def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+    # Use bcrypt directly to avoid passlib version check issues
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
 def create_access_token(data: dict):
     to_encode = data.copy()
