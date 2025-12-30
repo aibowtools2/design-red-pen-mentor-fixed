@@ -16,10 +16,12 @@ import jwt
 import bcrypt
 from pydantic import BaseModel, EmailStr
 
-from .gemini_client import analyze_image_design
-
-# Database Imports
-from . import db
+try:
+    from .gemini_client import analyze_image_design
+    from . import db
+except (ImportError, ValueError):
+    from gemini_client import analyze_image_design
+    import db
 from sqlalchemy.orm import Session
 
 # LINE Bot SDK
