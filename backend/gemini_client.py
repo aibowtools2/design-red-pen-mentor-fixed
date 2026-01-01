@@ -124,8 +124,8 @@ def analyze_image_design(image_path, context=None):
             }}
         ],
         "similar_creators": [
-             {"name": "Kenya Hara", "reason": "Use of unnecessary whitespace and simplicity."},
-             {"name": "Kashiwa Sato", "reason": "Strong, bold typography and icon usage."}
+             {{"name": "Kenya Hara", "reason": "Use of unnecessary whitespace and simplicity."}},
+             {{"name": "Kashiwa Sato", "reason": "Strong, bold typography and icon usage."}}
         ],
         "overall_comment": "A brief, encouraging summary in Japanese."
     }}
