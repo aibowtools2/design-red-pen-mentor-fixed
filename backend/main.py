@@ -404,6 +404,18 @@ def handle_event_background(event):
                         fd.write(chunk)
                 
                 try:
+                    # Show loading animation (60s max)
+                    url = f"https://api.line.me/v2/bot/chat/loading/start"
+                    headers = {
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}"
+                    }
+                    import requests
+                    requests.post(url, headers=headers, json={"chatId": user_id, "loadingSeconds": 60})
+                except Exception as e:
+                    logger.warning(f"Failed to send loading animation: {e}")
+
+                try:
                     context = {"type": "LINE Upload", "target": "Unknown", "purpose": "General Check"}
                     result_json_str = analyze_image_design(temp_path, context)
                     logger.info(f"Gemini Raw Result for LINE: {result_json_str}")
@@ -460,15 +472,22 @@ def handle_event_background(event):
                         f"https://design-sensei.aibowtools.com/"
                     )
                     
-                    line_bot_api.reply_message(
-                        event.reply_token,
-                        TextSendMessage(text=reply_text)
-                    )
+                    try:
+                        line_bot_api.reply_message(
+                            event.reply_token,
+                            TextSendMessage(text=reply_text)
+                        )
+                    except Exception as reply_err:
+                        logger.warning(f"Reply token expired? Trying Push Message: {reply_err}")
+                        line_bot_api.push_message(
+                            user_id,
+                            TextSendMessage(text=reply_text)
+                        )
                     
                 except Exception as e:
                     print(f"LINE Analysis Error: {e}")
                     try:
-                        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="申し訳ありません。分析中にエラーが発生しました。"))
+                        line_bot_api.push_message(user_id, TextSendMessage(text="申し訳ありません。分析中にエラーが発生しました。"))
                     except: pass
     except Exception as e:
         print(f"Background Task Error: {e}")
