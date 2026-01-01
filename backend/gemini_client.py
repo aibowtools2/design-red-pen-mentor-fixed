@@ -123,10 +123,6 @@ def analyze_image_design(image_path, context=None):
                  "naruhodo_principle": "Alignment (Soroe)"
             }}
         ],
-        "similar_creators": [
-             {{"name": "Kenya Hara", "reason": "Use of unnecessary whitespace and simplicity."}},
-             {{"name": "Kashiwa Sato", "reason": "Strong, bold typography and icon usage."}}
-        ],
         "overall_comment": "A brief, encouraging summary in Japanese."
     }}
     

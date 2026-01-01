@@ -451,22 +451,13 @@ def handle_event_background(event):
                     else:
                         improvements = ""
                         
-                    # Similar Creators formatting
-                    sim_list = data.get('similar_creators', [])
-                    if sim_list:
-                        creators = [f"🎨 {c.get('name')}\n   {c.get('reason')}" for c in sim_list[:2]]
-                        similar_section = "\n\n【似ているクリエイター】\n" + "\n".join(creators)
-                    else:
-                        similar_section = ""
-
                     reply_text = (
                         f"━━━━━━━━━━━━━━\n"
                         f"  📝 AIデザイン添削結果\n"
                         f"━━━━━━━━━━━━━━\n\n"
                         f"🏆 スコア: {score} / 100\n\n"
                         f"{good_points}\n\n"
-                        f"{improvements}"
-                        f"{similar_section}\n\n"
+                        f"{improvements}\n\n"
                         f"━━━━━━━━━━━━━━\n"
                         f"👇 Web版で詳細を見る (10項目評価)\n"
                         f"https://design-sensei.aibowtools.com/"
