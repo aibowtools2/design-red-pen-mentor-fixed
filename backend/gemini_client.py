@@ -18,7 +18,7 @@ if API_KEY:
 # "gemini-1.5-pro-latest" is the stable multimodal workhorse.
 # "gemini-exp-1206" (Gemini 2.0 Flash) is faster if available.
 # ... existing code ...
-IMAGE_MODEL_NAME = "gemini-flash-latest"
+IMAGE_MODEL_NAME = "gemini-2.5-pro"
 
 def analyze_image_design(image_path, context=None):
     """
@@ -123,6 +123,10 @@ def analyze_image_design(image_path, context=None):
                  "naruhodo_principle": "Alignment (Soroe)"
             }}
         ],
+        "similar_creators": [
+             {"name": "Kenya Hara", "reason": "Use of unnecessary whitespace and simplicity."},
+             {"name": "Kashiwa Sato", "reason": "Strong, bold typography and icon usage."}
+        ],
         "overall_comment": "A brief, encouraging summary in Japanese."
     }}
     
@@ -132,6 +136,14 @@ def analyze_image_design(image_path, context=None):
     
     **CRITICAL**: All values (comments, suggestions, reason) MUST be in **Japanese**.
     Be specific. Use numbers (px, %, ratio).
+    
+    **SCORING RULES**:
+    - "design_score" (0-100) MUST be calculated as the AVERAGE of the 10 "detailed_metrics" (each 1-10) multiplied by 10.
+    - BE CRITICAL. Do not give high scores easily.
+    - 60 = Standard / Average.
+    - 80 = Professional level.
+    - 90+ = Exceptional / World Class.
+    - If there are clear flows (e.g. text readability issues), the score MUST be below 80.
     """
     
     model = genai.GenerativeModel(model_name=IMAGE_MODEL_NAME)

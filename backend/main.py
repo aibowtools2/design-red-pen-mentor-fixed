@@ -424,10 +424,41 @@ def handle_event_background(event):
                     )
                     
                     score = data.get('design_score', 0)
-                    good_points = "\n".join([f"✅ {p}" for p in data.get('good_points', [])[:2]])
-                    improvements = "\n".join([f"🔧 {i.get('issue','')} -> {i.get('suggestion','')}" for i in data.get('improvements', [])[:2]])
                     
-                    reply_text = f"【添削完了】\n🏆 デザインスコア: {score}点\n\n{good_points}\n\n{improvements}\n\n👇Web版ならもっと詳細な分析が見れます！\n(色・構図・フォントなど10項目以上)\nhttps://design-sensei.aibowtools.com/"
+                    # Good Points formatting
+                    gp_list = data.get('good_points', [])
+                    if gp_list:
+                        good_points = "【良い点】\n" + "\n".join([f"✅ {p}" for p in gp_list[:2]])
+                    else:
+                        good_points = ""
+
+                    # Improvements formatting
+                    imp_list = data.get('improvements', [])
+                    if imp_list:
+                        improvements = "【改善のヒント】\n" + "\n\n".join([f"🔧 {i.get('issue','')}\n   👉 {i.get('suggestion','')}" for i in imp_list[:2]])
+                    else:
+                        improvements = ""
+                        
+                    # Similar Creators formatting
+                    sim_list = data.get('similar_creators', [])
+                    if sim_list:
+                        creators = [f"🎨 {c.get('name')}\n   {c.get('reason')}" for c in sim_list[:2]]
+                        similar_section = "\n\n【似ているクリエイター】\n" + "\n".join(creators)
+                    else:
+                        similar_section = ""
+
+                    reply_text = (
+                        f"━━━━━━━━━━━━━━\n"
+                        f"  📝 AIデザイン添削結果\n"
+                        f"━━━━━━━━━━━━━━\n\n"
+                        f"🏆 スコア: {score} / 100\n\n"
+                        f"{good_points}\n\n"
+                        f"{improvements}"
+                        f"{similar_section}\n\n"
+                        f"━━━━━━━━━━━━━━\n"
+                        f"👇 Web版で詳細を見る (10項目評価)\n"
+                        f"https://design-sensei.aibowtools.com/"
+                    )
                     
                     line_bot_api.reply_message(
                         event.reply_token,
